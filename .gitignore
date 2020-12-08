@@ -1,3 +1,6 @@
+# Backend
+backend/dist/
+
 # Logs
 logs
 *.log
