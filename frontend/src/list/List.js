@@ -14,7 +14,7 @@ const getPublications = gql`
     }
 `;
 
-const ListDiv = styled.div`
+const ListWrapperDiv = styled.div`
     margin-left: 8px;
 `;
 
@@ -22,18 +22,24 @@ const List = () => {
     const { loading, error, data } = useQuery(getPublications);
 
     if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error}</p>;
+    if (error) return <p>{String(error)}</p>;
 
     return data.publications.map((publication) => (
-        <ListDiv>
+        <div>
             <h3>Publication {publication.id}</h3>
             <p><b>Title:</b> {publication.title}</p>
             <p><b>Type:</b> {publication.type}</p>
             <p><b>Volume:</b> {publication.volume}</p>
             <p><b>Year:</b> {publication.year}</p>
             <hr />
-        </ListDiv>
+        </div>
     ));
 };
 
-export default List;
+const ListWrapper = () => (
+    <ListWrapperDiv>
+        <List />
+    </ListWrapperDiv>
+);
+
+export default ListWrapper;
