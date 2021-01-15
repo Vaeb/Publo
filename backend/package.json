@@ -6,12 +6,19 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --trace-deprecation --experimental-specifier-resolution=node src/index.js",
     "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node src/aggregate.js"
   },
   "author": "Adam Johnson (Vaeb)",
   "license": "ISC",
   "dependencies": {
+    "apollo-server": "^2.19.2",
+    "apollo-server-express": "^2.19.2",
     "axios": "^0.21.1",
+    "express": "^4.17.1",
+    "graphql": "^15.4.0",
+    "graphql-tools": "^7.0.2",
+    "lodash": "^4.17.20",
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
     "sequelize": "^6.3.5",
