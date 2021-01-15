@@ -10,6 +10,12 @@ export default (sequelize, DataTypes) => {
             type: {
                 type: DataTypes.STRING,
             },
+            volume: {
+                type: DataTypes.STRING,
+            },
+            year: {
+                type: DataTypes.INTEGER,
+            },
         }
     );
 

@@ -60,7 +60,12 @@ const fetchDblp = async (models) => {
                     const existingPublication = await models.Publication.findOne({ where: { title: result.title }, raw: true });
                     if (existingPublication === null && !titles[result.title]) {
                         titles[result.title] = true;
-                        return models.Publication.create({ title: result.title, type: result.type });
+                        return models.Publication.create({
+                            title: result.title,
+                            type: result.type,
+                            volume: result.volume,
+                            year: result.year,
+                        });
                     }
                     numCopies++;
                     return undefined;
