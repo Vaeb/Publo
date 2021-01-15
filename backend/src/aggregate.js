@@ -30,27 +30,39 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const fetchDblp = async (models) => {
     let enabled = true;
 
-    // const dblpQuery = new Array(2021-1936+1).fill(1936).map((v, i) => v + i).join('|');
-    const dblpQuery = 2020;
+    const minYear = 1936;
+    const maxYear = new Date().getFullYear();
+    // const query = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i).join('|');
+    const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i);
+    let numOptions = queryOptions.length;
+    let queryIndex = -1;
+
     const size = 1000;
     let first = 0;
-    // let i = 2;
-
     let titles = {};
 
     while (enabled) {
-        // if (!i--) break;
-
         console.log('\nFetching...');
+
+        queryIndex = (queryIndex + 1) % numOptions;
+        const queryIndexNow = queryIndex;
+        const queryNow = queryOptions[queryIndexNow];
+        console.log(queryIndexNow, queryNow);
 
         try {
             // eslint-disable-next-line no-await-in-loop
-            const { data, ...response } = await axios.get(`${dblpUrl}?q=${dblpQuery}&format=json&h=${size}&f=${first}`);
+            const { data, ...response } = await axios.get(`${dblpUrl}?q=${queryNow}&format=json&h=${size}&f=${first}`);
             console.log('fetchDblp response', size, first, 'status', response.status, 'statusText', response.statusText);
 
             const results = data.result.hits.hit;
 
-            // await models.Publication.bulkCreate(hits.map(hit => ({ title: hit.info.title, type: hit.info.type })), { validation: true, ignoreDuplicates: true });
+            if (results === undefined) {
+                console.log('No results for query!');
+                queryOptions.splice(queryIndex, 1);
+                numOptions--;
+                queryIndex--;
+                continue;
+            }
 
             let numCopies = 0;
             // eslint-disable-next-line no-await-in-loop
@@ -80,7 +92,7 @@ const fetchDblp = async (models) => {
         }
 
         // eslint-disable-next-line no-await-in-loop
-        await sleep(2000);
+        await sleep(1500);
 
         first += size;
         titles = {};
