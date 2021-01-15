@@ -7,8 +7,7 @@ import initPublication from './publication';
 const env = process.env.NODE_ENV || 'development';
 const config = configs[env];
 
-console.log('');
-console.log('env:', env);
+console.log('\nCurrent env:', env);
 
 const sequelize = new Sequelize(config.database, config.username, config.password, config);
 

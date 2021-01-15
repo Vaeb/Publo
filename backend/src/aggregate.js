@@ -32,33 +32,42 @@ const fetchDblp = async (models) => {
 
     // const dblpQuery = new Array(2021-1936+1).fill(1936).map((v, i) => v + i).join('|');
     const dblpQuery = 2020;
-    const size = 2;
+    const size = 1000;
     let first = 0;
-    let i = 2;
+    // let i = 2;
+
+    let titles = {};
 
     while (enabled) {
-        if (!i--) break;
+        // if (!i--) break;
+
+        console.log('\nFetching...');
 
         try {
             // eslint-disable-next-line no-await-in-loop
             const { data, ...response } = await axios.get(`${dblpUrl}?q=${dblpQuery}&format=json&h=${size}&f=${first}`);
-            console.log('fetchDblp response', size, first, response.status, response.statusText);
+            console.log('fetchDblp response', size, first, 'status', response.status, 'statusText', response.statusText);
 
             const results = data.result.hits.hit;
 
             // await models.Publication.bulkCreate(hits.map(hit => ({ title: hit.info.title, type: hit.info.type })), { validation: true, ignoreDuplicates: true });
 
+            let numCopies = 0;
             // eslint-disable-next-line no-await-in-loop
             await Promise.all(
+                // eslint-disable-next-line no-loop-func
                 results.map(async ({ info: result }) => {
                     const existingPublication = await models.Publication.findOne({ where: { title: result.title }, raw: true });
-                    if (existingPublication === null) {
+                    if (existingPublication === null && !titles[result.title]) {
+                        titles[result.title] = true;
                         return models.Publication.create({ title: result.title, type: result.type });
                     }
-                    console.log('copy exists');
+                    numCopies++;
                     return undefined;
                 })
             );
+
+            console.log(`Done, ${numCopies} copies found`);
         } catch (err) {
             console.log('fetchDblp failed');
             console.error(err);
@@ -69,7 +78,10 @@ const fetchDblp = async (models) => {
         await sleep(2000);
 
         first += size;
+        titles = {};
     }
+
+    console.log('Finished fetching!');
 
     return () => {
         enabled = false;
