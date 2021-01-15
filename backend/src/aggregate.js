@@ -33,25 +33,25 @@ const fetchDblp = async (models) => {
     const minYear = 1936;
     const maxYear = new Date().getFullYear();
     // const query = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i).join('|');
-    const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i);
+    const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => [v + i, 0]);
     let numOptions = queryOptions.length;
     let queryIndex = -1;
 
     const size = 1000;
-    let first = 0;
     let titles = {};
 
     while (enabled) {
         console.log('\nFetching...');
+        titles = {};
 
         queryIndex = (queryIndex + 1) % numOptions;
         const queryIndexNow = queryIndex;
-        const queryNow = queryOptions[queryIndexNow];
-        console.log(queryIndexNow, queryNow);
+        const [query, first] = queryOptions[queryIndexNow];
+        console.log(queryIndexNow, query, first);
 
         try {
             // eslint-disable-next-line no-await-in-loop
-            const { data, ...response } = await axios.get(`${dblpUrl}?q=${queryNow}&format=json&h=${size}&f=${first}`);
+            const { data, ...response } = await axios.get(`${dblpUrl}?q=${query}&format=json&h=${size}&f=${first}`);
             console.log('fetchDblp response', size, first, 'status', response.status, 'statusText', response.statusText);
 
             const results = data.result.hits.hit;
@@ -91,11 +91,10 @@ const fetchDblp = async (models) => {
             break;
         }
 
+        queryOptions[queryIndexNow][1] += size;
+
         // eslint-disable-next-line no-await-in-loop
         await sleep(1500);
-
-        first += size;
-        titles = {};
     }
 
     console.log('Finished fetching!');
