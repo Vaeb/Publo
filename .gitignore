@@ -1,5 +1,6 @@
-# Backend
-backend/dist/
+# Custom
+*.code-workspace
+test/
 
 # Logs
 logs
