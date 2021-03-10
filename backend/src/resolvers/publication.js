@@ -2,8 +2,17 @@ import formatErrors from '../formatErrors';
 
 export default {
     Query: {
-        publications: (parent, args, { models }) => models.Publication.findAll({ raw: true }),
-        publication: (parent, { id }, { models }) => models.Publication.findOne({ where: { id } }),
+        getPublication: (parent, { id }, { models }) => models.Publication.findOne({ where: { id } }),
+        getAllPublications: (parent, { limit }, { models }) => models.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
+        findPublications: (parent, { text, limit }, { models }) => (text.length ? models.Publication.findAll({
+            where: {
+                [models.op.or]: {
+                    title: { [models.op.substring]: text },
+                },
+            },
+            limit,
+            raw: true,
+        }) : []),
     },
     Mutation: {
         addPublication: async (parent, { title, type, volume, year }, { models }) => {

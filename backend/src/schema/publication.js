@@ -19,8 +19,9 @@ export default `
     }
 
     type Query {
-        publications: [Publication!]!
-        publication(id: Int!): Publication!
+        getPublication(id: Int!): Publication!
+        getAllPublications(limit: Int): [Publication!]!
+        findPublications(text: String!, type: String, limit: Int): [Publication]!
     }
 
     type Mutation {

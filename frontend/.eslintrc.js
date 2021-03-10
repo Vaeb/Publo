@@ -18,6 +18,16 @@ module.exports = {
         'react',
     ],
     rules: {
+        'comma-dangle': [
+            'error',
+            {
+                arrays: 'always-multiline',
+                objects: 'always-multiline',
+                imports: 'always-multiline',
+                exports: 'always-multiline',
+                functions: 'never',
+            },
+        ],
         // "class-methods-use-this": "off",
         // "default-case": "off",
         eqeqeq: 'off',
@@ -36,6 +46,7 @@ module.exports = {
         'no-console': 'off',
         // "no-continue": "off",
         // "no-control-regex": "off",
+        'no-else-return': 'off',
         'no-empty': ['error', { allowEmptyCatch: true }],
         // "no-eval": "off",
         // "no-irregular-whitespace": "off",
@@ -61,6 +72,7 @@ module.exports = {
         'react/jsx-indent': ['error', 4],
         'react/jsx-indent-props': ['error', 4],
         'react/jsx-one-expression-per-line': 'off',
+        'react/jsx-props-no-spreading': 'off',
         'react/jsx-wrap-multilines': [
             'error',
             {
@@ -72,6 +84,7 @@ module.exports = {
         ],
         'react/no-unused-state': 'warn',
         'react/prop-types': 'off',
+        'react/self-closing-comp': 'warn',
         'react/sort-comp': [
             2,
             {
