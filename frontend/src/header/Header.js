@@ -5,6 +5,7 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 
+import { scrollMargin } from '../app/util';
 import Search from './Search';
 
 const HeaderEl = styled.header`
@@ -21,7 +22,7 @@ const HeaderDiv = styled.div`
 const Header = () => (
     <HeaderEl>
         <HeaderDiv>
-            <Grid templateColumns="repeat(24, 1fr)" templateRows="repeat(1, 1fr)" w="100%" h="inherit">
+            <Grid templateColumns="repeat(24, 1fr)" templateRows="repeat(1, 1fr)" w="calc(100% - 40px)" h="inherit">
                 <GridItem colSpan={3} h="inherit">
                     <Box pl="30px" w="fit-content">
                         <LinkBox as={RouterLink} to="/home">
