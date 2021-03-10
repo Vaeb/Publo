@@ -34,66 +34,17 @@ const GlobalStyles = createGlobalStyle`
         outline: none;
         box-shadow: none;
     }
-
-    .scrollMargin {
-        margin-right: calc(var(--scroll-width) - calc(100vw - var(--document-width)));
-    }
 `;
 
-function getScrollbarWidth() {
-    // Creating invisible container
-    const outer = document.createElement('div');
-    outer.style.visibility = 'hidden';
-    outer.style.overflow = 'scroll'; // forcing scrollbar to appear
-    outer.style.msOverflowStyle = 'scrollbar'; // needed for WinJS apps
-    document.body.appendChild(outer);
-
-    // Creating inner element and placing it in the container
-    const inner = document.createElement('div');
-    outer.appendChild(inner);
-
-    // Calculating difference between container's full width and the child width
-    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
-
-    // Removing temporary elements from the DOM
-    outer.parentNode.removeChild(outer);
-
-    return scrollbarWidth;
-}
-
-const ScrollAdjuster = ({ children }) => {
-    const scrollWidth = getScrollbarWidth(); // math min
-
-    const htmlEl = document.documentElement;
-    htmlEl.style.setProperty(
-        '--scroll-width',
-        `${scrollWidth}px`
-    );
-
-    // create an Observer instance
-    const resizeObserver = new ResizeObserver((entries) => {
-        htmlEl.style.setProperty(
-            '--document-width',
-            `${document.documentElement.clientWidth}px`
-        );
-    });
-
-    resizeObserver.observe(document.body);
-
-    return children;
-};
-
 const App = (
-    <ScrollAdjuster>
-        <ApolloProvider client={client}>
-            <ChakraProvider>
-                <GlobalStyles />
-                <div>
-                    <Routes />
-                </div>
-            </ChakraProvider>
-        </ApolloProvider>
-    </ScrollAdjuster>
+    <ApolloProvider client={client}>
+        <ChakraProvider>
+            <GlobalStyles />
+            <div>
+                <Routes />
+            </div>
+        </ChakraProvider>
+    </ApolloProvider>
 );
 
 ReactDOM.render(App, document.getElementById('root'));
