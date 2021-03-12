@@ -1,6 +1,9 @@
 # Custom
 *.code-workspace
 test/
+frontend/TODO.txt
+backend/TODO.txt
+.vscode/
 
 # Logs
 logs
