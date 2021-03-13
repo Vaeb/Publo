@@ -6,8 +6,12 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node src/aggregate.js",
     "start": "nodemon --trace-deprecation --experimental-specifier-resolution=node src/index.js",
-    "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node src/aggregate.js"
+    "start2": "ts-node src/index.ts",
+    "watch": "tsc -w",
+    "go": "node build/dist/index.js",
+    "dev": "nodemon build/dist/index.js"
   },
   "author": "Adam Johnson (Vaeb)",
   "license": "ISC",
@@ -22,9 +26,11 @@
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
     "sequelize": "^6.3.5",
+    "type-graphql": "^1.1.1",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
+    "@types/express": "^4.17.11",
     "@types/node": "^14.14.33",
     "eslint": "^7.17.0",
     "eslint-config-airbnb-base": "^14.2.1",
