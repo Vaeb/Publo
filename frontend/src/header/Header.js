@@ -11,6 +11,7 @@ const HeaderEl = styled.header`
     position: relative;
     max-width: 100%;
     box-shadow: 0 2px 8px #f0f1f2;
+    margin-bottom: 10px;
 `;
 
 const HeaderDiv = styled.div`

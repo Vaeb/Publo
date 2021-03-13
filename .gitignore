@@ -3,6 +3,8 @@
 test/
 frontend/TODO.txt
 backend/TODO.txt
+frontend/src/test1.*
+frontend/src/test2.*
 .vscode/
 
 # Logs

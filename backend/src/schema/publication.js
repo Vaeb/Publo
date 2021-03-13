@@ -1,6 +1,6 @@
 export default `
     type Publication {
-        id: Int!
+        id: ID!
         title: String!
         type: String
         volume: String
@@ -26,5 +26,7 @@ export default `
 
     type Mutation {
         addPublication(title: String!, type: String, volume: String, year: Int): AddPublicationResponse!
+        runTest(model: String!, method: String!, data: Obj): Obj
+        runCode(code: String!): Obj
     }
 `;

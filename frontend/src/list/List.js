@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { Box, VStack, StackDivider } from '@chakra-ui/react';
 
@@ -48,7 +48,7 @@ const List = () => {
     return (
         <div>
             <VStack divider={<StackDivider borderColor="gray.200" />} spacing={4} align="stretch">
-                {data.getAllPublications.map((pub) => (
+                {data.getAllPublications.map(pub => (
                     <Box key={pub.id}>
                         {/* <h3>{pub.id}</h3> */}
                         <p>{decodeEntities(pub.title)}</p>

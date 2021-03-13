@@ -5,6 +5,7 @@ import Header from '../header/Header';
 import Home from '../home/Home';
 import Publication from '../publication/Publication';
 import List from '../list/List';
+import Run from './Run';
 
 const Routes = () => (
     <BrowserRouter>
@@ -15,6 +16,7 @@ const Routes = () => (
             <Route path="/home" exact><Home /></Route>
             <Route path="/publication/:pubId" exact><Publication /></Route>
             <Route path="/list" exact><List /></Route>
+            <Route path="/run" exact><Run /></Route>
         </div>
     </BrowserRouter>
 );

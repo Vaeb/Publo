@@ -1,3 +1,7 @@
 import publication from './publication';
 
-export default [publication];
+const objScalar = `
+    scalar Obj
+`;
+
+export default [publication, objScalar];

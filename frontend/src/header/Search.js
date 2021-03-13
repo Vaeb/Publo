@@ -1,9 +1,11 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { gql, useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { InputGroup, InputLeftElement, Input, Box, Link } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
+
+const { useState, useMemo, useRef } = React;
 
 const findPublications = gql`
     query($text: String!, $type: String) {
@@ -22,20 +24,22 @@ const SearchResults = ({ text, onClick }) => {
         variables: { text },
     });
 
-    const ref = React.useRef(_data);
+    const ref = useRef(_data);
     if (!loading) ref.current = _data;
     const data = ref.current;
 
     let results;
-    if (loading && !data) {
+    if ((loading && !data) || !data.findPublications.length) {
         return false;
-    } else if (error) {
-        results = [{ id: 0, title: String(error) }];
-    } else if (!data.findPublications.length) {
-        return false;
-    } else {
-        results = data.findPublications;
     }
+
+    if (error) {
+        results = [{ id: 0, title: String(error) }];
+    } else {
+        return false;
+    }
+
+    if (!error) results.splice(0, 0, { id: 0, title: `> Search for '${text}'` });
 
     return (
         <Box
@@ -46,23 +50,20 @@ const SearchResults = ({ text, onClick }) => {
             lineHeight={2}
             bg="white"
             boxShadow="0 3px 6px -4px rgb(0 0 0 / 12%), 0 6px 16px 0 rgb(0 0 0 / 8%), 0 9px 28px 8px rgb(0 0 0 / 5%)"
-            onClick={onClick}
         >
-            {results.map((pub) => (
-                <Box key={pub.id}>
-                    <Link as={RouterLink} to="/list">
-                        {pub.title}
-                    </Link>
-                </Box>
+            {results.map(pub => (
+                <Link key={pub.id} as={RouterLink} to="/list" onClick={onClick}>
+                    <Box w="100%">{pub.title}</Box>
+                </Link>
             ))}
         </Box>
     );
 };
 
 const toggleOnFocus = (initial = false) => {
-    const [show, toggle] = React.useState(initial);
+    const [show, toggle] = useState(initial);
 
-    const eventHandlers = React.useMemo(
+    const eventHandlers = useMemo(
         () => ({
             onFocus: () => toggle(true),
             onBlur: (e) => {
@@ -74,16 +75,17 @@ const toggleOnFocus = (initial = false) => {
         []
     );
 
-    return [show, eventHandlers];
+    return [show, eventHandlers, toggle];
 };
 
 const Search = () => {
-    const [searchVal, setSearchVal] = React.useState('');
-    const [show, eventHandlers] = toggleOnFocus();
+    const [searchVal, setSearchVal] = useState('');
+    const [show, eventHandlers, toggle] = toggleOnFocus();
 
-    const handleChange = (event) => setSearchVal(event.target.value);
-
-    console.log('searchVal', searchVal, searchVal.length);
+    const onResultClick = () => {
+        setSearchVal('');
+        toggle(false);
+    };
 
     return (
         <Box w="100%" position="relative" {...eventHandlers}>
@@ -91,9 +93,15 @@ const Search = () => {
                 <InputLeftElement pointerEvents="none" h="100%">
                     <SearchIcon color="#ced4d9" />
                 </InputLeftElement>
-                <Input value={searchVal} onChange={handleChange} placeholder="Search publications..." pl="45px" />
+                <Input
+                    value={searchVal}
+                    onChange={e => setSearchVal(e.target.value)}
+                    variant="unstyled"
+                    placeholder="Search publications..."
+                    pl="45px"
+                />
             </InputGroup>
-            {show && !!searchVal.length && <SearchResults text={searchVal} />}
+            {show && !!searchVal.length && <SearchResults text={searchVal} onClick={onResultClick} />}
         </Box>
     );
 };
