@@ -1,11 +1,9 @@
 import React from 'react';
-import styled from 'styled-components';
 import {
     Box, Heading,
 } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
 
-const Header = ({ title }) => (
+const Publication = ({ title }) => (
     <Box>
         <Heading fontWeight={500} fontSize="24px">
             {title}
@@ -13,4 +11,4 @@ const Header = ({ title }) => (
     </Box>
 );
 
-export default Header;
+export default Publication;

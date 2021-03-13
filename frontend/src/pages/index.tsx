@@ -1,11 +1,10 @@
 import React from 'react';
 import { gql, useQuery } from '@apollo/client';
-import styled from 'styled-components';
 import {
     Box,
 } from '@chakra-ui/react';
 
-import List from '../list/List';
+import List from './list';
 
 const Home = () => (
     <div>

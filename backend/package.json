@@ -1,17 +1,18 @@
 {
   "name": "publo-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node src/aggregate.js",
-    "start": "nodemon --trace-deprecation --experimental-specifier-resolution=node src/index.js",
+    "start": "node src/index.ts",
+    "dev": "nodemon --trace-deprecation --experimental-specifier-resolution=node src/index.js",
     "start2": "ts-node src/index.ts",
     "watch": "tsc -w",
-    "go": "node build/dist/index.js",
-    "dev": "nodemon build/dist/index.js"
+    "start3": "node build/dist/index.js",
+    "dev2": "nodemon build/dist/index.js"
   },
   "author": "Adam Johnson (Vaeb)",
   "license": "ISC",

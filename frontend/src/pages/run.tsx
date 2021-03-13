@@ -1,7 +1,6 @@
 import React from 'react';
 import { gql, useMutation } from '@apollo/client';
 import ReactJson from 'react-json-view';
-import styled from 'styled-components';
 import {
     Box, Textarea, Heading, Text, InputGroup, InputLeftAddon, Button,
 } from '@chakra-ui/react';
@@ -21,7 +20,7 @@ const Test = () => {
     const result = data != undefined ? JSON.parse(data.runCode) : data;
     if (result) console.log('> Output:', result);
 
-    let codeInput;
+    let codeInput: HTMLTextAreaElement | null;
 
     return (
         <Box className="side-padding">
@@ -62,7 +61,7 @@ const Test = () => {
                     codeInput.focus();
                     codeInput.select();
                     document.execCommand('copy');
-                    window.getSelection().removeAllRanges();
+                    window.getSelection()?.removeAllRanges();
                     codeInput.blur();
                     runCode({ variables: { code } });
                 }}
