@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
+import dynamic from 'next/dynamic'
 import ReactJson from 'react-json-view';
 import {
     Box, Textarea, Heading, Text, InputGroup, InputLeftAddon, Button,
 } from '@chakra-ui/react';
-
-const { useState } = React;
 
 const RUN_CODE = gql`
     mutation($code: String!) {
@@ -13,12 +12,30 @@ const RUN_CODE = gql`
     }
 `;
 
+const DynamicComponentWithNoSSR = dynamic(
+    () => import('react-json-view'),
+    { ssr: false }
+);
+
+const ReactJsonWrapper = (props: any) => {
+    if (process.browser) {
+        return null ? (
+            <div {...props} />
+        ) : null;
+    } else {
+        return null;
+    }
+};
+
 const Test = () => {
     const [showCode, setShowCode] = useState(true);
     const [runCode, { loading, error, data }] = useMutation(RUN_CODE);
 
-    const result = data != undefined ? JSON.parse(data.runCode) : data;
-    if (result) console.log('> Output:', result);
+    let result = data != undefined ? JSON.parse(data.runCode) : data;
+    if (result) {
+        if (typeof result !== 'object') result = [result];
+        console.log('> Output:', result);
+    }
 
     let codeInput: HTMLTextAreaElement | null;
 
@@ -56,13 +73,13 @@ const Test = () => {
                 w="100%"
                 fontSize="xl"
                 onClick={() => {
-                    const code = codeInput.value;
+                    const code = codeInput?.value;
                     console.log('Running code:', code);
-                    codeInput.focus();
-                    codeInput.select();
-                    document.execCommand('copy');
+                    codeInput?.focus();
+                    codeInput?.select();
+                    document?.execCommand('copy');
                     window.getSelection()?.removeAllRanges();
-                    codeInput.blur();
+                    codeInput?.blur();
                     runCode({ variables: { code } });
                 }}
             >
@@ -71,7 +88,7 @@ const Test = () => {
             {loading && <p>Loading...</p>}
             {error && <p>Error: {String(error)}</p>}
             {result && (
-                <ReactJson
+                <DynamicComponentWithNoSSR
                     src={result}
                     iconStyle="triangle"
                     displayDataTypes={false}

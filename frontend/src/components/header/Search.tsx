@@ -19,7 +19,7 @@ const findPublications = gql`
     }
 `;
 
-const SearchResults = ({ text, onClick }) => {
+const SearchResults = ({ text, onClick }: any) => {
     const { loading, error, data: _data } = useQuery(findPublications, {
         variables: { text },
     });
@@ -68,8 +68,8 @@ const toggleOnFocus = (initial = false): any => {
     const eventHandlers = useMemo(
         () => ({
             onFocus: () => toggleShow(true),
-            onBlur: (e) => {
-                if (!e.currentTarget.contains(e.relatedTarget)) {
+            onBlur: (e: React.FocusEvent<HTMLElement>) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                     toggleShow(false);
                 }
             },

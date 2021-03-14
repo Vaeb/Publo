@@ -24,7 +24,7 @@ const List = () => {
     return (
         <div>
             <VStack divider={<StackDivider borderColor="gray.200" />} spacing={4} align="stretch">
-                {data.getAllPublications.map((pub) => (
+                {data.getAllPublications.map((pub: any) => (
                     <Box key={pub.id}>
                         {/* <h3>{pub.id}</h3> */}
                         <p>{he.decode(pub.title)}</p>
