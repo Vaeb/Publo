@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { Box, VStack, StackDivider } from '@chakra-ui/react';
 import he from 'he';
@@ -38,7 +38,7 @@ const List = () => {
     );
 };
 
-const ListWrapper = () => (
+const ListWrapper = (): ReactElement => (
     <Box ml="8px">
         <List />
     </Box>

@@ -1,11 +1,13 @@
+import React, { ReactElement } from 'react';
 import NextDocument, { Html, Head, Main, NextScript } from 'next/document';
 
 export default class Document extends NextDocument {
-    render() {
+    // eslint-disable-next-line class-methods-use-this
+    render(): ReactElement {
         return (
             <Html>
                 <Head>
-                    <link rel="shortcut icon" href="/search3.png"></link>
+                    <link rel="shortcut icon" href="/search3.png" />
                 </Head>
                 <body>
                     <Main />

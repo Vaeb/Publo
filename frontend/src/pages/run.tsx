@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
 import dynamic from 'next/dynamic';
 import {
-    Box, Textarea, Heading, Text, InputGroup, InputLeftAddon, Button,
+    Box, Textarea, Button,
 } from '@chakra-ui/react';
 
 const RUN_CODE = gql`

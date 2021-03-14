@@ -1,14 +1,14 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { ReactElement } from 'react';
+// import styled from 'styled-components';
 import {
-    Heading, Link, LinkBox, LinkOverlay, Grid, GridItem, Box, Image,
+    Heading, Grid, GridItem, Box,
 } from '@chakra-ui/react';
-import NextLink from "next/link";
-import NextImage from "next/image";
+import NextLink from 'next/link';
+import NextImage from 'next/image';
 
 import Search from './Search';
 
-const Header = () => (
+const Header = (): ReactElement => (
     <Box pos="relative" maxW="100%" boxShadow="0 2px 8px #f0f1f2" mb="10px">
         <Box display="flex" h="64px">
             <Grid templateColumns="repeat(24, 1fr)" templateRows="repeat(1, 1fr)" w="calc(100% - 40px)" h="inherit">

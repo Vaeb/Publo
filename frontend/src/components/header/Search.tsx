@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { ReactElement, useState, useMemo, useRef } from 'react';
 import { gql, useQuery } from '@apollo/client';
-import styled from 'styled-components';
+// import styled from 'styled-components';
 import { InputGroup, InputLeftElement, Input, Box, Link } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
-import NextLink from "next/link";
-
-const { useState, useMemo, useRef } = React;
+import NextLink from 'next/link';
 
 const findPublications = gql`
     query($text: String!, $type: String) {
@@ -19,7 +17,12 @@ const findPublications = gql`
     }
 `;
 
-const SearchResults = ({ text, onClick }: any) => {
+interface SearchResultsParams {
+    text: string;
+    onClick: () => any;
+}
+
+const SearchResults = ({ text, onClick }: SearchResultsParams) => {
     const { loading, error, data: _data } = useQuery(findPublications, {
         variables: { text },
     });
@@ -80,7 +83,7 @@ const toggleOnFocus = (initial = false): any => {
     return [show, eventHandlers, toggleShow];
 };
 
-const Search = () => {
+const Search = (): ReactElement => {
     const [searchVal, setSearchVal] = useState('');
     const [show, eventHandlers, toggleShow] = toggleOnFocus();
 

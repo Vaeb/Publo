@@ -1,8 +1,8 @@
 import models from './models';
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export default resetDatabase => new Promise(async (resolve, reject) => {
+export default (resetDatabase: boolean): any => new Promise(async (resolve, reject) => {
     let reconnectsLeft = 20;
     let connected = false;
 

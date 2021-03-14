@@ -1,9 +1,9 @@
 import pick from 'lodash/pick';
 import nodeUtils from 'util';
 
-export default (e, models) => {
+export default (e: any, models: any): any[] => {
     if (e instanceof models.sequelize.ValidationError) {
-        return e.errors.map(x => pick(x, ['path', 'message']));
+        return e.errors.map((x: any) => pick(x, ['path', 'message']));
     }
 
     if (e instanceof Error) {

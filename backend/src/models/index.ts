@@ -29,7 +29,7 @@ const models: Models = {
 };
 
 Object.keys(models).forEach((modelName: string) => {
-    const nowModel: any = models[modelName];
+    const nowModel = models[modelName];
     if (nowModel.associate) {
         nowModel.associate(models);
     }
