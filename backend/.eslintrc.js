@@ -1,7 +1,7 @@
 module.exports = {
     env: {
-        es2021: true,
         node: true,
+        es2021: true,
     },
     parser: '@typescript-eslint/parser',
     parserOptions: {
@@ -13,6 +13,7 @@ module.exports = {
         '@typescript-eslint',
     ],
     extends: [
+        'plugin:@typescript-eslint/recommended',
         'airbnb-typescript/base',
     ],
     rules: {
@@ -47,11 +48,11 @@ module.exports = {
         'no-control-regex': 'off',
         'no-eval': 'off',
         'no-extend-native': 'off',
-        '@typescript-eslint/no-implied-eval': 'off',
         // "no-irregular-whitespace": "off",
         // "no-lonely-if": "off",
         'no-mixed-operators': 'off',
         // "no-multi-spaces": "off",
+        'no-new': 'off',
         'no-param-reassign': 'off',
         'no-plusplus': 'off',
         'no-prototype-builtins': 'off',

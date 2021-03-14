@@ -3,24 +3,28 @@ module.exports = {
         browser: true,
         es2021: true,
     },
-    extends: [
-        'plugin:react/recommended',
-        'airbnb',
-    ],
+    parser: '@typescript-eslint/parser',
     parserOptions: {
+        project: './tsconfig.json',
+        ecmaVersion: 2021,
         ecmaFeatures: {
             jsx: true,
         },
-        ecmaVersion: 12,
         sourceType: 'module',
     },
     plugins: [
+        '@typescript-eslint',
         'react',
+    ],
+    extends: [
+        'plugin:@typescript-eslint/recommended',
+        'plugin:react/recommended',
+        'airbnb-typescript/base',
     ],
     rules: {
         'arrow-parens': ['error', 'as-needed', { requireForBlockBody: true }],
         // "class-methods-use-this": "off",
-        'comma-dangle': [
+        '@typescript-eslint/comma-dangle': [
             'error',
             {
                 arrays: 'always-multiline',
@@ -34,7 +38,7 @@ module.exports = {
         eqeqeq: 'off',
         // * 'implicit-arrow-linebreak': 'off',
         'import/no-dynamic-require': 'off',
-        indent: ['error', 4],
+        '@typescript-eslint/indent': ['error', 4],
         // "func-names": "off",
         'global-require': 'off',
         'import/extensions': 'off',
@@ -65,7 +69,7 @@ module.exports = {
         // * 'no-restricted-globals': 'off',
         'no-restricted-syntax': 'off',
         'no-underscore-dangle': 'off',
-        'no-unused-vars': ['warn', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }],
+        '@typescript-eslint/no-unused-vars': ['warn', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }],
         'object-curly-newline': ['error', { minProperties: 6, multiline: true, consistent: true }],
         'prefer-destructuring': [
             'error',
