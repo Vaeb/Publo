@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
-import dynamic from 'next/dynamic'
-import ReactJson from 'react-json-view';
+import dynamic from 'next/dynamic';
 import {
     Box, Textarea, Heading, Text, InputGroup, InputLeftAddon, Button,
 } from '@chakra-ui/react';
@@ -12,22 +11,12 @@ const RUN_CODE = gql`
     }
 `;
 
-const DynamicComponentWithNoSSR = dynamic(
+const ReactJson = dynamic(
     () => import('react-json-view'),
     { ssr: false }
 );
 
-const ReactJsonWrapper = (props: any) => {
-    if (process.browser) {
-        return null ? (
-            <div {...props} />
-        ) : null;
-    } else {
-        return null;
-    }
-};
-
-const Test = () => {
+const Test = (): React.ReactElement => {
     const [showCode, setShowCode] = useState(true);
     const [runCode, { loading, error, data }] = useMutation(RUN_CODE);
 
@@ -73,13 +62,14 @@ const Test = () => {
                 w="100%"
                 fontSize="xl"
                 onClick={() => {
-                    const code = codeInput?.value;
+                    if (!codeInput) return;
+                    const code = codeInput.value;
                     console.log('Running code:', code);
-                    codeInput?.focus();
-                    codeInput?.select();
-                    document?.execCommand('copy');
+                    codeInput.focus();
+                    codeInput.select();
+                    document.execCommand('copy');
                     window.getSelection()?.removeAllRanges();
-                    codeInput?.blur();
+                    codeInput.blur();
                     runCode({ variables: { code } });
                 }}
             >
@@ -88,7 +78,7 @@ const Test = () => {
             {loading && <p>Loading...</p>}
             {error && <p>Error: {String(error)}</p>}
             {result && (
-                <DynamicComponentWithNoSSR
+                <ReactJson
                     src={result}
                     iconStyle="triangle"
                     displayDataTypes={false}
