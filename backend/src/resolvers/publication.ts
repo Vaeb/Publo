@@ -1,4 +1,4 @@
-import formatErrors from '../formatErrors';
+import formatErrors from '../utils/formatErrors';
 
 export default {
     Query: {

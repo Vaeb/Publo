@@ -1,4 +1,6 @@
-export default (sequelize, DataTypes) => {
+import * as Sequelize from 'sequelize';
+
+export default (sequelize: Sequelize.Sequelize, DataTypes: typeof Sequelize.DataTypes): typeof Sequelize.Model => {
     const Publication = sequelize.define(
         'publication',
         {

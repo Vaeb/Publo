@@ -1,4 +1,4 @@
-import path from 'path';
+// import path from 'path';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
 // import { makeExecutableSchema } from '@graphql-tools/schema';

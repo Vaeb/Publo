@@ -6,6 +6,7 @@
         "build": "next build",
         "start": "next start"
     },
+    "author": "Adam Johnson (Vaeb)",
     "dependencies": {
         "@apollo/client": "^3.3.11",
         "@chakra-ui/icons": "^1.0.0",
@@ -24,7 +25,7 @@
         "react-json-view": "^1.21.3",
         "styled-components": "^5.2.1"
     },
-    "license": "MIT",
+    "license": "ISC",
     "devDependencies": {
         "@types/node": "^14.14.34",
         "@types/styled-components": "^5.1.8",
