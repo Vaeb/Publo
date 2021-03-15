@@ -1,5 +1,6 @@
+import React from 'react';
 import { ApolloProvider } from '@apollo/client';
-import { ChakraProvider, ColorModeProvider } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import 'focus-visible/dist/focus-visible';
 
 import client from '../apollo';
@@ -8,7 +9,7 @@ import GlobalStyles from '../style';
 
 import Layout from '../components/layout/Layout';
 
-function MyApp({ Component, pageProps }: any) {
+function MyApp({ Component, pageProps }: any): React.ReactElement {
     return (
         <ApolloProvider client={client}>
             <ChakraProvider resetCSS theme={theme}>

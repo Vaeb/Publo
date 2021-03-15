@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 // import styled from 'styled-components';
 import {
-    Heading, Grid, GridItem, Box, Flex, useBreakpointValue, Icon,
+    Heading, Box, Flex, useBreakpointValue, Icon,
 } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import NextImage from 'next/image';
