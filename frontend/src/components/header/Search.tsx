@@ -19,7 +19,7 @@ const findPublications = gql`
 
 interface SearchResultsParams {
     text: string;
-    onClick: () => any;
+    onClick: () => void;
 }
 
 const SearchResults = ({ text, onClick }: SearchResultsParams) => {
@@ -103,7 +103,8 @@ const Search = (): ReactElement => {
                     onChange={e => setSearchVal(e.target.value)}
                     variant="unstyled"
                     placeholder="Search publications..."
-                    pl="45px"
+                    fontSize={['sm', 'md']}
+                    pl={[9, 10]}
                 />
             </InputGroup>
             {show && !!searchVal.length && <SearchResults text={searchVal} onClick={onResultClick} />}

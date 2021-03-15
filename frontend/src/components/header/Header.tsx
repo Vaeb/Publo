@@ -13,10 +13,10 @@ const Header = (): ReactElement => (
         <Box display="flex" h="64px">
             <Grid templateColumns="repeat(24, 1fr)" templateRows="repeat(1, 1fr)" w="calc(100% - 40px)" h="inherit">
                 <GridItem colSpan={3} h="inherit">
-                    <Box pl="30px" w="fit-content">
+                    <Box pl={[0, 2, 4, 8]} w="fit-content">
                         <NextLink href="/">
                             <a>
-                                <Heading fontWeight={500} display="flex" alignItems="center" fontSize="20px" lineHeight="64px" p="0 10px">
+                                <Heading fontWeight={500} display="flex" alignItems="center" fontSize={['sm', 'xl']} lineHeight="64px" p="0 10px">
                                     <Box display="inline-flex" alignItems="center" mr="16px" h="100%">
                                         <NextImage src="/search3.png" alt="" width="28px" height="28px" />
                                     </Box>
