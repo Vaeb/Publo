@@ -32,7 +32,7 @@ const SearchResults = ({ text, onClick }: SearchResultsParams) => {
     const data = ref.current;
 
     let results;
-    if ((loading && !data) || !data.findPublications.length) {
+    if (!data || !data.findPublications.length) {
         return null;
     }
 
