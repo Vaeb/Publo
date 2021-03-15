@@ -11,9 +11,9 @@ console.log('\nCurrent env:', env);
 
 const sequelize = new Sequelize.Sequelize(config.database, config.username, config.password, config);
 
-type ModelType = typeof Sequelize.Model;
+type ModelType = typeof Sequelize.Model & { associate?: (models: Models) => void };
 
-interface Models {
+export interface Models {
     Publication: ModelType;
     sequelize: typeof sequelize;
     Sequelize: typeof Sequelize;
@@ -28,9 +28,13 @@ const models: Models = {
     op: Sequelize.Op,
 };
 
-Object.keys(models).forEach((modelName: string) => {
+function keys<T>(obj: T): (keyof T)[] {
+    return Object.keys(obj) as any;
+}
+
+keys<Models>(models).forEach((modelName) => {
     const nowModel = models[modelName];
-    if (nowModel.associate) {
+    if ('associate' in nowModel && nowModel.associate) {
         nowModel.associate(models);
     }
 });
