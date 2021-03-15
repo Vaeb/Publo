@@ -4,15 +4,19 @@ export default {
     Query: {
         getPublication: (parent, { id }, { models }) => models.Publication.findOne({ where: { id } }),
         getAllPublications: (parent, { limit }, { models }) => models.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
-        findPublications: (parent, { text, limit }, { models }) => (text.length ? models.Publication.findAll({
-            where: {
-                [models.op.or]: {
-                    title: { [models.op.substring]: text },
+        findPublications: (parent, { text, limit }, { models }) => {
+            console.log('Received request for findPublications:', text);
+
+            return (text.length ? models.Publication.findAll({
+                where: {
+                    [models.op.or]: {
+                        title: { [models.op.substring]: text },
+                    },
                 },
-            },
-            limit,
-            raw: true,
-        }) : []),
+                limit,
+                raw: true,
+            }) : []);
+        },
     },
     Mutation: {
         addPublication: async (parent, { title, type, volume, year }, { models }) => {

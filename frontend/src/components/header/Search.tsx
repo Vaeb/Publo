@@ -31,6 +31,8 @@ const SearchResults = ({ text, onClick }: SearchResultsParams) => {
     if (!loading) ref.current = _data;
     const data = ref.current;
 
+    console.log('Got data:', 'loading', loading, '_data', _data, 'data', data, 'error', error);
+
     let results;
     if (!data || !data.findPublications.length) {
         return null;
