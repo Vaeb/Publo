@@ -2,9 +2,9 @@ import formatErrors from '../utils/formatErrors';
 
 export default {
     Query: {
-        getPublication: (parent, { id }, { models }) => models.Publication.findOne({ where: { id } }),
-        getAllPublications: (parent, { limit }, { models }) => models.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
-        findPublications: (parent, { text, limit }, { models }) => {
+        getPublication: (_parent: any, { id }: any, { models }: any): Promise<any> => models.Publication.findOne({ where: { id } }),
+        getAllPublications: (_parent: any, { limit }: any, { models }: any): Promise<any> => models.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
+        findPublications: (_parent: any, { text, limit }: any, { models }: any): Promise<any> => {
             console.log('Received request for findPublications:', text);
 
             return (text.length ? models.Publication.findAll({
@@ -19,7 +19,7 @@ export default {
         },
     },
     Mutation: {
-        addPublication: async (parent, { title, type, volume, year }, { models }) => {
+        addPublication: async (_parent: any, { title, type, volume, year }: any, { models }: any): Promise<any> => {
             try {
                 const publication = await models.Publication.create({ title, type, volume, year });
                 return {
@@ -36,7 +36,7 @@ export default {
                 };
             }
         },
-        runTest: async (parent, { model, method, data }, { models }) => {
+        runTest: async (_parent: any, { model, method, data }: any, { models }: any): Promise<any> => {
             try {
                 console.log('> Running:', `models.${model}.${method}(${data})`);
 
@@ -57,7 +57,7 @@ export default {
                 return null;
             }
         },
-        runCode: async (parent, { code }, { models }) => {
+        runCode: async (_parent: any, { code }: any): Promise<any> => {
             try {
                 code = `(async function() {\n${code}\n})()`;
                 console.log('> Running:', code);
