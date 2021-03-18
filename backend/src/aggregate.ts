@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-import connect from './connect';
+import OrmSetup from './server';
 
-const resetDatabase = true;
+// const resetDatabase = true;
 
 const dblpUrl = 'https://dblp.org/search/publ/api';
 
@@ -25,9 +25,12 @@ const dblpUrl = 'https://dblp.org/search/publ/api';
     from:          177,665
 */
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const fetchDblp = async (models) => {
+const { connect, orm } = new OrmSetup();
+const em = orm.em.fork();
+
+const fetchDblp = async () => {
     let enabled = true;
 
     const minYear = 1936;
@@ -67,8 +70,8 @@ const fetchDblp = async (models) => {
             let numCopies = 0;
             // eslint-disable-next-line no-await-in-loop
             await Promise.all(
-                // eslint-disable-next-line no-loop-func
-                results.map(async ({ info: result }) => {
+                // eslint-disable-next-line @typescript-eslint/no-loop-func
+                results.map(async ({ info: result }: any) => {
                     const existingPublication = await models.Publication.findOne({ where: { title: result.title }, raw: true });
                     if (existingPublication === null && !titles[result.title]) {
                         titles[result.title] = true;
@@ -104,8 +107,8 @@ const fetchDblp = async (models) => {
     };
 };
 
-connect(resetDatabase).then((models) => {
+connect().then(() => {
     console.log('');
     console.log('(aggregate.js) Sequelize synced');
-    fetchDblp(models);
+    fetchDblp();
 });

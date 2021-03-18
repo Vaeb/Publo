@@ -1,27 +1,33 @@
+import { EntityManager } from '@mikro-orm/core';
+
 import formatErrors from '../utils/formatErrors';
+
+interface Context {
+    em: EntityManager;
+}
 
 export default {
     Query: {
-        getPublication: (_parent: any, { id }: any, { models }: any): Promise<any> => models.Publication.findOne({ where: { id } }),
-        getAllPublications: (_parent: any, { limit }: any, { models }: any): Promise<any> => models.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
-        findPublications: (_parent: any, { text, limit }: any, { models }: any): Promise<any> => {
+        getPublication: (_parent: any, { id }: any, { em }: Context): Promise<any> => em.Publication.findOne({ where: { id } }),
+        getAllPublications: (_parent: any, { limit }: any, { em }: Context): Promise<any> => em.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
+        findPublications: (_parent: any, { text, limit }: any, { em }: Context): Promise<any> => {
             console.log('Received request for findPublications:', text);
 
-            return (text.length ? models.Publication.findAll({
+            return (text.length ? em.Publication.findAll({
                 where: {
-                    [models.op.or]: {
-                        title: { [models.op.substring]: text },
+                    [em.op.or]: {
+                        title: { [em.Sequelize.Op.iLike]: text },
                     },
                 },
                 limit,
                 raw: true,
-            }) : []);
+            }) : []) as any;
         },
     },
     Mutation: {
-        addPublication: async (_parent: any, { title, type, volume, year }: any, { models }: any): Promise<any> => {
+        addPublication: async (_parent: any, { title, type, volume, year }: any, { em }: Context): Promise<any> => {
             try {
-                const publication = await models.Publication.create({ title, type, volume, year });
+                const publication = await em.Publication.create({ title, type, volume, year });
                 return {
                     ok: true,
                     publication,
@@ -32,19 +38,19 @@ export default {
                 console.log('--------------------------------');
                 return {
                     ok: false,
-                    errors: formatErrors(err, models),
+                    errors: formatErrors(err, em),
                 };
             }
         },
-        runTest: async (_parent: any, { model, method, data }: any, { models }: any): Promise<any> => {
+        runTest: async (_parent: any, { model, method, data }: any, { em }: Context): Promise<any> => {
             try {
-                console.log('> Running:', `models.${model}.${method}(${data})`);
+                console.log('> Running:', `em.${model}.${method}(${data})`);
 
                 let result;
                 if (Array.isArray(data)) {
-                    result = await models[model][method](...data);
+                    result = await em[model][method](...data);
                 } else {
-                    result = await models[model][method](data);
+                    result = await em[model][method](data);
                 }
 
                 console.log('> Result:', result);

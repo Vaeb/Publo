@@ -18,7 +18,7 @@ const getAllPublications = gql`
 const List = () => {
     const { loading, error, data } = useQuery(getAllPublications);
 
-    if (loading) return <p>Loading...</p>;
+    if (loading) return null;
     if (error) return <p>{String(error)}</p>;
 
     return (

@@ -2,7 +2,7 @@ import * as Sequelize from 'sequelize';
 // import decamelize from 'decamelize';
 
 import configs from '../config/config';
-import initPublication from './publication';
+import initPublication from './_Publication';
 
 const env = process.env.NODE_ENV || 'development';
 const config = configs[env];
