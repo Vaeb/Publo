@@ -16,6 +16,7 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'airbnb-typescript/base',
     ],
+    ignorePatterns: 'src/migrations/',
     rules: {
         'arrow-parens': [
             'error',
@@ -71,10 +72,11 @@ module.exports = {
         'no-prototype-builtins': 'off',
         'no-restricted-syntax': 'off',
         'no-underscore-dangle': 'off',
-        '@typescript-eslint/no-unused-vars': [
-            'warn',
-            { vars: 'all', args: 'after-used', ignoreRestSiblings: true },
-        ],
+        // '@typescript-eslint/no-unused-vars': [
+        //     'warn',
+        //     { vars: 'all', args: 'after-used', ignoreRestSiblings: true },
+        // ],
+        '@typescript-eslint/no-unused-vars': 'off',
         'object-curly-newline': [
             'error',
             { minProperties: 5, multiline: true, consistent: true },

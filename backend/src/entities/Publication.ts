@@ -4,18 +4,26 @@ import { BaseEntity } from './BaseEntity';
 
 @Entity()
 export class Publication extends BaseEntity {
-    @Property()
+    @Property({ length: 1023 })
     title!: string;
 
     @Property()
     type!: string;
 
     @Property()
-    volume?: string;
-
-    @Property()
     year!: number;
 
-    // @ManyToOne(() => Author)
-    // author!: Author;
+    @Property({ nullable: true })
+    volume?: string;
+
+    // @ManyToMany(() => Author)
+    // authors = new Collection<Author>(this);
+
+    constructor(title: string, type: string, year: number, volume?: string) {
+        super();
+        this.title = title;
+        this.type = type;
+        this.year = year;
+        if (volume !== undefined) this.volume = volume;
+    }
 }

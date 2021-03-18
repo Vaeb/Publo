@@ -1,4 +1,7 @@
-import { EntityManager } from '@mikro-orm/core';
+/* eslint-disable implicit-arrow-linebreak */
+
+import { EntityManager, QueryOrder } from '@mikro-orm/core';
+import { Publication } from '../entities';
 
 import formatErrors from '../utils/formatErrors';
 
@@ -6,28 +9,57 @@ interface Context {
     em: EntityManager;
 }
 
+declare global {
+    interface RegExpConstructor {
+        escape: (str: string) => string;
+    }
+}
+
+RegExp.escape = str => (
+    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+);
+
 export default {
     Query: {
-        getPublication: (_parent: any, { id }: any, { em }: Context): Promise<any> => em.Publication.findOne({ where: { id } }),
-        getAllPublications: (_parent: any, { limit }: any, { em }: Context): Promise<any> => em.Publication.findAll({ order: [['title', 'ASC']], limit, raw: true }),
-        findPublications: (_parent: any, { text, limit }: any, { em }: Context): Promise<any> => {
+        getPublication: (_parent: any, { id }: any, { em }: Context): Promise<any> =>
+            em.findOne(
+                Publication,
+                { id }
+            ),
+        getAllPublications: (_parent: any, { limit }: any, { em }: Context): Promise<any> =>
+            em.find(
+                Publication,
+                {},
+                {
+                    orderBy: { title: QueryOrder.DESC },
+                    limit,
+                }
+            ),
+        findPublications: (_parent: any, { text, limit }: any, { em }: Context): any => {
             console.log('Received request for findPublications:', text);
 
-            return (text.length ? em.Publication.findAll({
-                where: {
-                    [em.op.or]: {
-                        title: { [em.Sequelize.Op.iLike]: text },
-                    },
+            if (!text.length) return [];
+
+            return em.find(
+                Publication,
+                {
+                    $or: [
+                        { title: new RegExp(RegExp.escape(text), 'i') },
+                    ],
                 },
-                limit,
-                raw: true,
-            }) : []) as any;
+                {
+                    limit,
+                }
+            );
         },
     },
     Mutation: {
-        addPublication: async (_parent: any, { title, type, volume, year }: any, { em }: Context): Promise<any> => {
+        addPublication: async (_parent: any, { title, type, year, volume }: any, { em }: Context): Promise<any> => {
             try {
-                const publication = await em.Publication.create({ title, type, volume, year });
+                const publication = new Publication(title, type, year, volume);
+
+                await em.persistAndFlush(publication);
+
                 return {
                     ok: true,
                     publication,
@@ -40,27 +72,6 @@ export default {
                     ok: false,
                     errors: formatErrors(err, em),
                 };
-            }
-        },
-        runTest: async (_parent: any, { model, method, data }: any, { em }: Context): Promise<any> => {
-            try {
-                console.log('> Running:', `em.${model}.${method}(${data})`);
-
-                let result;
-                if (Array.isArray(data)) {
-                    result = await em[model][method](...data);
-                } else {
-                    result = await em[model][method](data);
-                }
-
-                console.log('> Result:', result);
-                return result;
-            } catch (err) {
-                console.log('++++++++++++++++++++++++++++++++');
-                console.log('> RUNTEST ERROR:', err);
-                console.log('--------------------------------');
-
-                return null;
             }
         },
         runCode: async (_parent: any, { code }: any): Promise<any> => {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-import OrmSetup from './server';
+import { orm } from './server';
+import { Publication } from './entities';
 
 // const resetDatabase = true;
 
@@ -27,8 +28,13 @@ const dblpUrl = 'https://dblp.org/search/publ/api';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const { connect, orm } = new OrmSetup();
 const em = orm.em.fork();
+
+console.log('Aggregating publications...');
+
+interface Titles {
+    [k: string]: boolean;
+}
 
 const fetchDblp = async () => {
     let enabled = true;
@@ -41,7 +47,7 @@ const fetchDblp = async () => {
     let queryIndex = -1;
 
     const size = 1000;
-    let titles = {};
+    let titles: Titles = {};
 
     while (enabled) {
         console.log('\nFetching...');
@@ -72,20 +78,18 @@ const fetchDblp = async () => {
             await Promise.all(
                 // eslint-disable-next-line @typescript-eslint/no-loop-func
                 results.map(async ({ info: result }: any) => {
-                    const existingPublication = await models.Publication.findOne({ where: { title: result.title }, raw: true });
-                    if (existingPublication === null && !titles[result.title]) {
+                    const existingPublication = await em.findOne(Publication, { title: result.title });
+                    if (existingPublication == null && !titles[result.title]) {
                         titles[result.title] = true;
-                        return models.Publication.create({
-                            title: result.title,
-                            type: result.type,
-                            volume: result.volume,
-                            year: result.year,
-                        });
+                        const publication = new Publication(result.title, result.type, result.year, result.volume);
+                        em.persist(publication);
                     }
                     numCopies++;
                     return undefined;
                 })
             );
+
+            em.flush();
 
             console.log(`Done, ${numCopies} copies found`);
         } catch (err) {
@@ -107,8 +111,4 @@ const fetchDblp = async () => {
     };
 };
 
-connect().then(() => {
-    console.log('');
-    console.log('(aggregate.js) Sequelize synced');
-    fetchDblp();
-});
+fetchDblp();

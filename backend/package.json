@@ -3,15 +3,14 @@
     "version": "0.1.0",
     "description": "",
     "main": "index.js",
+    "type": "module",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node src/aggregate.js",
-        "start": "node src/index.ts",
-        "dev": "nodemon dist/index.js",
-        "dev2": "nodemon --trace-deprecation --experimental-specifier-resolution=node src/index.js",
-        "start2": "ts-node src/index.ts",
+        "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node dist/aggregate.js",
+        "start": "ts-node src/index.ts",
+        "dev": "nodemon --trace-deprecation --experimental-specifier-resolution=node dist/index.js",
         "watch": "tsc -w",
-        "start3": "node dist/index.js"
+        "start2": "node dist/index.js"
     },
     "author": "Adam Johnson (Vaeb)",
     "license": "ISC",
@@ -30,7 +29,6 @@
         "pg-hstore": "^2.3.3",
         "reflect-metadata": "^0.1.13",
         "sequelize": "^6.3.5",
-        "type-graphql": "^1.1.1",
         "xml2js": "^0.4.23"
     },
     "devDependencies": {
@@ -52,8 +50,10 @@
     },
     "mikro-orm": {
         "useTsNode": true,
+        "tsConfigPath": "./tsconfig.orm.json",
         "configPaths": [
-            "./src/config/mikro-orm.config.ts"
+            "./src/config/mikro-orm.config.ts",
+            "./dist/config/mikro-orm.config.js"
         ]
     }
 }

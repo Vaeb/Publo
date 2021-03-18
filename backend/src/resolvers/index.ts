@@ -14,8 +14,12 @@ const objScalar = new GraphQLScalarType({
     },
     parseLiteral(ast) {
         try {
-            const obj = JSON.parse(ast.value); // Convert hard-coded AST string to integer and then to Date
-            return obj;
+            if ('value' in ast) {
+                const obj = JSON.parse(String(ast.value)); // Convert hard-coded AST string to integer and then to Date
+                return obj;
+            }
+            console.log('Failed ParseLiteral (no .value):', ast);
+            return null;
         } catch (err) {
             return null;
         }
