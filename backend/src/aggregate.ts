@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 import axios from 'axios';
 
 import { orm } from './server';
@@ -59,7 +61,6 @@ const fetchDblp = async () => {
         console.log(queryIndexNow, query, first);
 
         try {
-            // eslint-disable-next-line no-await-in-loop
             const { data, ...response } = await axios.get(`${dblpUrl}?q=${query}&format=json&h=${size}&f=${first}`);
             console.log('fetchDblp response', size, first, 'status', response.status, 'statusText', response.statusText);
 
@@ -74,7 +75,6 @@ const fetchDblp = async () => {
             }
 
             let numCopies = 0;
-            // eslint-disable-next-line no-await-in-loop
             await Promise.all(
                 // eslint-disable-next-line @typescript-eslint/no-loop-func
                 results.map(async ({ info: result }: any) => {
@@ -89,7 +89,7 @@ const fetchDblp = async () => {
                 })
             );
 
-            em.flush();
+            await em.flush();
 
             console.log(`Done, ${numCopies} copies found`);
         } catch (err) {
@@ -100,7 +100,6 @@ const fetchDblp = async () => {
 
         queryOptions[queryIndexNow][1] += size;
 
-        // eslint-disable-next-line no-await-in-loop
         await sleep(1500);
     }
 

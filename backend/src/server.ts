@@ -4,25 +4,24 @@
 // import { loadFilesSync } from '@graphql-tools/load-files';
 
 import 'reflect-metadata';
-import { MikroORM, EntityManager } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
+import { AbstractSqlConnection } from '@mikro-orm/knex';
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 
 import ormConfig from './config/mikro-orm.config';
 import typeDefs from './schema';
 import resolvers from './resolvers';
+import { Context } from './types';
 
 // const typeDefs = mergeTypeDefs(loadFilesSync(path.resolve('./schema')));
 // const resolvers = mergeResolvers(loadFilesSync(path.resolve('./resolvers')));
 
-interface Context {
-    em: EntityManager;
-    serverUrl: string;
-}
-
 console.log('[IORM] Initializing MikroORM...');
 
 export const orm = await MikroORM.init(ormConfig);
+
+export const conn = orm.em.getConnection() as AbstractSqlConnection;
 
 try {
     const migrator = orm.getMigrator();
@@ -49,6 +48,7 @@ export const listen = async (): Promise<void> => {
         resolvers,
         context: ({ req }) => ({
             em: orm.em.fork(),
+            conn,
             serverUrl: `${req.protocol}://${req.get('host')}`,
         } as Context),
     });

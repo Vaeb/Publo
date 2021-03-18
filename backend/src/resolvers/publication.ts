@@ -1,13 +1,10 @@
 /* eslint-disable implicit-arrow-linebreak */
 
-import { EntityManager, QueryOrder } from '@mikro-orm/core';
+import { QueryOrder } from '@mikro-orm/core';
+
+import { Context } from '../types';
 import { Publication } from '../entities';
-
 import formatErrors from '../utils/formatErrors';
-
-interface Context {
-    em: EntityManager;
-}
 
 declare global {
     interface RegExpConstructor {
@@ -31,11 +28,11 @@ export default {
                 Publication,
                 {},
                 {
-                    orderBy: { title: QueryOrder.DESC },
+                    orderBy: { title: QueryOrder.ASC },
                     limit,
                 }
             ),
-        findPublications: (_parent: any, { text, limit }: any, { em }: Context): any => {
+        findPublications: (_parent: any, { text, limit }: any, { em, conn }: Context): any => {
             console.log('Received request for findPublications:', text);
 
             if (!text.length) return [];
@@ -44,7 +41,7 @@ export default {
                 Publication,
                 {
                     $or: [
-                        { title: new RegExp(RegExp.escape(text), 'i') },
+                        { title: { $ilike: `%${text}%` } },
                     ],
                 },
                 {

@@ -17,6 +17,7 @@
     "dependencies": {
         "@mikro-orm/cli": "^4.4.4",
         "@mikro-orm/core": "^4.4.4",
+        "@mikro-orm/knex": "^4.4.4",
         "@mikro-orm/postgresql": "^4.4.4",
         "apollo-server": "^2.19.2",
         "apollo-server-express": "^2.19.2",
