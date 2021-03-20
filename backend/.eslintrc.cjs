@@ -8,6 +8,7 @@ module.exports = {
         project: './tsconfig.json',
         ecmaVersion: 2021,
         sourceType: 'module',
+        extraFileExtensions: ['.cjs'],
     },
     plugins: [
         '@typescript-eslint',
@@ -72,11 +73,11 @@ module.exports = {
         'no-prototype-builtins': 'off',
         'no-restricted-syntax': 'off',
         'no-underscore-dangle': 'off',
-        // '@typescript-eslint/no-unused-vars': [
-        //     'warn',
-        //     { vars: 'all', args: 'after-used', ignoreRestSiblings: true },
-        // ],
-        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': [
+            'warn',
+            { vars: 'all', args: 'after-used', ignoreRestSiblings: true },
+        ],
+        // '@typescript-eslint/no-unused-vars': 'off',
         'object-curly-newline': [
             'error',
             { minProperties: 5, multiline: true, consistent: true },
