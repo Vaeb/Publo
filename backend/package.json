@@ -15,10 +15,7 @@
     "author": "Adam Johnson (Vaeb)",
     "license": "ISC",
     "dependencies": {
-        "@mikro-orm/cli": "^4.4.4",
-        "@mikro-orm/core": "^4.4.4",
-        "@mikro-orm/knex": "^4.4.4",
-        "@mikro-orm/postgresql": "^4.4.4",
+        "@prisma/client": "^2.19.0",
         "apollo-server": "^2.19.2",
         "apollo-server-express": "^2.19.2",
         "axios": "^0.21.1",
@@ -29,7 +26,6 @@
         "pg": "^8.5.1",
         "pg-hstore": "^2.3.3",
         "reflect-metadata": "^0.1.13",
-        "sequelize": "^6.3.5",
         "xml2js": "^0.4.23"
     },
     "devDependencies": {
@@ -45,16 +41,8 @@
         "eslint-plugin-import": "^2.22.1",
         "eslint-plugin-prettier": "^3.3.1",
         "prettier": "^2.2.1",
-        "sequelize-cli": "^6.2.0",
+        "prisma": "2.19.0",
         "ts-node": "^9.1.1",
         "typescript": "^4.2.3"
-    },
-    "mikro-orm": {
-        "useTsNode": true,
-        "tsConfigPath": "./tsconfig.orm.json",
-        "configPaths": [
-            "./src/config/mikro-orm.config.ts",
-            "./dist/config/mikro-orm.config.js"
-        ]
     }
 }
