@@ -90,7 +90,7 @@ const Search = (): ReactElement => {
     const [show, eventHandlers, toggleShow] = toggleOnFocus();
 
     const onResultClick = () => {
-        setSearchVal('');
+        // setSearchVal('');
         toggleShow(false);
     };
 
