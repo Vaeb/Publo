@@ -1,9 +1,9 @@
 import { ApolloClient, InMemoryCache } from '@apollo/client';
 
-const debugging = false;
+const webServer = false;
 
 const client = new ApolloClient({
-    uri: debugging ? 'http://localhost:4000/graphql' : 'http://vaeb.io:4000/graphql',
+    uri: webServer ? 'http://vaeb.io:4000/graphql' : 'http://localhost:4000/graphql',
     cache: new InMemoryCache(),
 });
 
