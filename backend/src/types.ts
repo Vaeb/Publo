@@ -1,8 +1,8 @@
-import { EntityManager } from '@mikro-orm/core';
-import { AbstractSqlConnection } from '@mikro-orm/knex';
+import PrismaWrapper from '@prisma/client';
+
+export type PrismaClient = PrismaWrapper.PrismaClient;
 
 export interface Context {
-    em: EntityManager;
-    conn: AbstractSqlConnection;
+    prisma: PrismaClient;
     serverUrl: string;
 }

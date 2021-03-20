@@ -2,8 +2,7 @@
 
 import axios from 'axios';
 
-import { orm } from './server';
-import { Publication } from './entities';
+import { prisma } from './server';
 
 // const resetDatabase = true;
 
@@ -30,13 +29,7 @@ const dblpUrl = 'https://dblp.org/search/publ/api';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const em = orm.em.fork();
-
 console.log('Aggregating publications...');
-
-interface Titles {
-    [k: string]: boolean;
-}
 
 const fetchDblp = async () => {
     let enabled = true;
@@ -49,11 +42,10 @@ const fetchDblp = async () => {
     let queryIndex = -1;
 
     const size = 1000;
-    let titles: Titles = {};
+    // const size = 2;
 
     while (enabled) {
         console.log('\nFetching...');
-        titles = {};
 
         queryIndex = (queryIndex + 1) % numOptions;
         const queryIndexNow = queryIndex;
@@ -74,24 +66,15 @@ const fetchDblp = async () => {
                 continue;
             }
 
-            let numCopies = 0;
-            await Promise.all(
-                // eslint-disable-next-line @typescript-eslint/no-loop-func
-                results.map(async ({ info: result }: any) => {
-                    const existingPublication = await em.findOne(Publication, { title: result.title });
-                    if (existingPublication == null && !titles[result.title]) {
-                        titles[result.title] = true;
-                        const publication = new Publication(result.title, result.type, result.year, result.volume);
-                        em.persist(publication);
-                    }
-                    numCopies++;
-                    return undefined;
-                })
-            );
+            const newRecords: any = results.map(({ info: result }: any) => (
+                { title: result.title, type: result.type, year: Number(result.year), volume: result.volume }
+            ));
 
-            await em.flush();
+            const output = await prisma.publication.createMany({ data: newRecords, skipDuplicates: true });
+            console.log('>> create output:');
+            console.dir(output, { depth: null });
 
-            console.log(`Done, ${numCopies} copies found`);
+            console.log(`Done, ${newRecords.length} copies found (${output.count} new)`);
         } catch (err) {
             console.log('fetchDblp failed');
             console.error(err);
@@ -100,6 +83,7 @@ const fetchDblp = async () => {
 
         queryOptions[queryIndexNow][1] += size;
 
+        // return;
         await sleep(1500);
     }
 
