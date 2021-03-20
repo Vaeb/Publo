@@ -7,7 +7,8 @@
         "experimentalDecorators": true,
         "lib": [
             "dom",
-            "esnext"
+            "esnext",
+            "esnext.asynciterable"
         ],
         "module": "esnext",
         "moduleResolution": "node",
@@ -30,7 +31,7 @@
         "node_modules"
     ],
     "include": [
-        ".eslintrc.js",
+        ".eslintrc.cjs",
         "./src/**/*.ts",
         "./src/**/*.tsx"
     ]

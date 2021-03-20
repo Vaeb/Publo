@@ -32,22 +32,31 @@ export default {
                     limit,
                 }
             ),
-        findPublications: (_parent: any, { text, limit }: any, { em, conn }: Context): any => {
+        findPublications: async (_parent: any, { text, limit }: any, { em, conn }: Context): any => {
             console.log('Received request for findPublications:', text);
 
             if (!text.length) return [];
 
-            return em.find(
-                Publication,
-                {
-                    $or: [
-                        { title: { $ilike: `%${text}%` } },
-                    ],
-                },
-                {
-                    limit,
-                }
-            );
+            try {
+                const result = await em.find(
+                    Publication,
+                    {
+                        $or: [
+                            { title: { $ilike: `%${text}%` } },
+                        ],
+                    },
+                    {
+                        limit,
+                    }
+                );
+
+                console.log('result', result);
+
+                return result;
+            } catch (err) {
+                console.log('failed');
+                console.error(err);
+            }
         },
     },
     Mutation: {
