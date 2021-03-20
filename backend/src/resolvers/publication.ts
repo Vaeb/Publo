@@ -32,7 +32,7 @@ export default {
             return prisma.publication.findMany({
                 where: {
                     OR: [
-                        { title: { contains: text } },
+                        { title: { contains: text, mode: 'insensitive' } },
                     ],
                 },
                 take: limit,
