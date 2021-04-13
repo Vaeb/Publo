@@ -1,9 +1,6 @@
 /* eslint-disable implicit-arrow-linebreak */
 
-import { QueryOrder } from '@mikro-orm/core';
-
 import { Context } from '../types';
-import { Publication } from '../entities';
 import formatErrors from '../utils/formatErrors';
 
 declare global {
@@ -18,53 +15,34 @@ RegExp.escape = str => (
 
 export default {
     Query: {
-        getPublication: (_parent: any, { id }: any, { em }: Context): Promise<any> =>
-            em.findOne(
-                Publication,
-                { id }
-            ),
-        getAllPublications: (_parent: any, { limit }: any, { em }: Context): Promise<any> =>
-            em.find(
-                Publication,
-                {},
-                {
-                    orderBy: { title: QueryOrder.ASC },
-                    limit,
-                }
-            ),
-        findPublications: async (_parent: any, { text, limit }: any, { em, conn }: Context): any => {
+        getPublication: (_parent: any, { id }: any, { prisma }: Context): Promise<any> =>
+            prisma.publication.findUnique({
+                where: { id }
+            }),
+        getAllPublications: (_parent: any, { limit }: any, { prisma }: Context): Promise<any> =>
+            prisma.publication.findMany({
+                orderBy: { title: 'asc' },
+                take: limit,
+            }),
+        findPublications: (_parent: any, { text, limit }: any, { prisma }: Context): any => {
             console.log('Received request for findPublications:', text);
 
             if (!text.length) return [];
 
-            try {
-                const result = await em.find(
-                    Publication,
-                    {
-                        $or: [
-                            { title: { $ilike: `%${text}%` } },
-                        ],
-                    },
-                    {
-                        limit,
-                    }
-                );
-
-                console.log('result', result);
-
-                return result;
-            } catch (err) {
-                console.log('failed');
-                console.error(err);
-            }
+            return prisma.publication.findMany({
+                where: {
+                    OR: [
+                        { title: { contains: text, mode: 'insensitive' } },
+                    ],
+                },
+                take: limit,
+            });
         },
     },
     Mutation: {
-        addPublication: async (_parent: any, { title, type, year, volume }: any, { em }: Context): Promise<any> => {
+        addPublication: async (_parent: any, { title, type, year, volume }: any, { prisma }: Context): Promise<any> => {
             try {
-                const publication = new Publication(title, type, year, volume);
-
-                await em.persistAndFlush(publication);
+                const publication = await prisma.publication.create({ data: { title, type, year, volume } })
 
                 return {
                     ok: true,
@@ -76,7 +54,7 @@ export default {
                 console.log('--------------------------------');
                 return {
                     ok: false,
-                    errors: formatErrors(err, em),
+                    errors: formatErrors(err, prisma),
                 };
             }
         },

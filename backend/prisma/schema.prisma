@@ -7,13 +7,18 @@ datasource db {
 }
 
 generator client {
-    provider = "prisma-client-js"
+    provider        = "prisma-client-js"
+    previewFeatures = ["createMany"]
 }
 
 model Publication {
-    id     Int     @id @default(autoincrement())
-    title  String
-    type   String
-    year   Int
-    volume String?
+    id        Int      @id @default(autoincrement())
+    title     String   @unique
+    type      String
+    year      Int
+    volume    String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("publications")
 }
