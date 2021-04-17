@@ -2,7 +2,11 @@ import React from 'react';
 import { extendTheme } from '@chakra-ui/react';
 import { createBreakpoints } from '@chakra-ui/theme-tools';
 
-const fonts = { mono: "'Menlo', monospace" };
+const fonts = {
+    mono: "'Menlo', monospace",
+    body: "'Inter'",
+    heading: "'Inter'",
+};
 
 const breakpoints = createBreakpoints({
     sm: '40em',
@@ -29,6 +33,24 @@ const theme = extendTheme({
                 </svg>
             ),
             viewBox: '0 0 3000 3163',
+        },
+    },
+    components: {
+        Link: {
+            // baseStyle: {
+            //     textDecoration: 'none !important',
+            // },
+            variants: {
+                'no-line': {
+                    textDecoration: 'none !important',
+                },
+                'hover-col-dark1': {
+                    textDecoration: 'none !important',
+                    _hover: {
+                        color: '#031b4e',
+                    },
+                },
+            },
         },
     },
 });

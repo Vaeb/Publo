@@ -1,11 +1,25 @@
 import React, { ReactElement } from 'react';
+import { useRouter } from 'next/router';
 import { gql, useQuery } from '@apollo/client';
 import { Box, VStack, StackDivider } from '@chakra-ui/react';
 import he from 'he';
+import NextLink from 'next/link';
 
-const getAllPublications = gql`
-    query {
-        getAllPublications(limit: 50) {
+// const getAllPublications = gql`
+//     query {
+//         getAllPublications(limit: 50) {
+//             id
+//             title
+//             type
+//             volume
+//             year
+//         }
+//     }
+// `;
+
+const findPublications = gql`
+    query($text: String!, $type: String) {
+        findPublications(text: $text, type: $type, limit: 100) {
             id
             title
             type
@@ -15,8 +29,17 @@ const getAllPublications = gql`
     }
 `;
 
+// interface ListArgs {
+//     query: string
+// }
+
 const List = () => {
-    const { loading, error, data } = useQuery(getAllPublications);
+    const router = useRouter();
+    const { text } = router.query;
+
+    const { loading, error, data } = useQuery(findPublications, {
+        variables: { text },
+    });
 
     if (loading) return null;
     if (error) return <p>{String(error)}</p>;
@@ -24,10 +47,10 @@ const List = () => {
     return (
         <div>
             <VStack divider={<StackDivider borderColor="gray.200" />} spacing={4} align="stretch">
-                {data.getAllPublications.map((pub: any) => (
+                {data.findPublications.map((pub: any) => (
                     <Box key={pub.id}>
                         {/* <h3>{pub.id}</h3> */}
-                        <p>{he.decode(pub.title)}</p>
+                        <NextLink href="/publication/[id]" as={`/publication/${pub.id}`}>{he.decode(pub.title)}</NextLink>
                         <p>Volume {pub.volume}</p>
                         <p>{pub.year}</p>
                     </Box>

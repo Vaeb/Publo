@@ -15,21 +15,24 @@ RegExp.escape = str => (
 
 export default {
     Query: {
-        getPublication: (_parent: any, { id }: any, { prisma }: Context): Promise<any> =>
-            prisma.publication.findUnique({
-                where: { id }
-            }),
+        getPublication: (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
+            console.log('Received request for getPublication:', id);
+            return prisma.publication.findUnique({
+                where: { id },
+                include: { authors: true, venue: true },
+            });
+        },
         getAllPublications: (_parent: any, { limit }: any, { prisma }: Context): Promise<any> =>
             prisma.publication.findMany({
                 orderBy: { title: 'asc' },
                 take: limit,
             }),
-        findPublications: (_parent: any, { text, limit }: any, { prisma }: Context): any => {
+        findPublications: async (_parent: any, { text, limit }: any, { prisma }: Context): any => {
             console.log('Received request for findPublications:', text);
 
             if (!text.length) return [];
 
-            return prisma.publication.findMany({
+            const results = await prisma.publication.findMany({
                 where: {
                     OR: [
                         { title: { contains: text, mode: 'insensitive' } },
@@ -37,17 +40,25 @@ export default {
                 },
                 take: limit,
             });
+            
+            results.sort((a, b) => {
+                const aIndex = a.title.indexOf(text);
+                const bIndex = b.title.indexOf(text);
+                return aIndex - bIndex;
+            });
+
+            return results;
         },
     },
     Mutation: {
         addPublication: async (_parent: any, { title, type, year, volume }: any, { prisma }: Context): Promise<any> => {
             try {
-                const publication = await prisma.publication.create({ data: { title, type, year, volume } })
+                // const publication = await prisma.publication.create({ data: { title, type, year, volume } });
 
-                return {
-                    ok: true,
-                    publication,
-                };
+                // return {
+                //     ok: true,
+                //     publication,
+                // };
             } catch (err) {
                 console.log('++++++++++++++++++++++++++++++++');
                 console.log('> ADD_PUBLICATION ERROR:', err);

@@ -1,6 +1,38 @@
 import { createGlobalStyle } from 'styled-components';
 
 export default createGlobalStyle`
+    @font-face {
+        font-family: "Inter";
+        src: url("/fonts/Inter-Light.ttf");
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: "Inter";
+        src: url("/fonts/Inter-Regular.ttf");
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: "Inter";
+        src: url("/fonts/Inter-Medium.ttf");
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: "Inter";
+        src: url("/fonts/Inter-Bold.ttf");
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+    }
+
     html {
         overflow-x: hidden;
         margin-right: calc(-1 * (100vw - 100%));
@@ -8,9 +40,7 @@ export default createGlobalStyle`
 
     body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-            sans-serif;
+        font-family: 'Inter', 'Segoe UI', 'Roboto', 'Open Sans', 'Helvetica Neue', sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         line-height: 1.5715;

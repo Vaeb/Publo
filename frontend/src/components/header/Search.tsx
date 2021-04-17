@@ -56,10 +56,10 @@ const SearchResults = ({ text, onClick }: SearchResultsParams) => {
             bg="white"
             boxShadow="0 3px 6px -4px rgb(0 0 0 / 12%), 0 6px 16px 0 rgb(0 0 0 / 8%), 0 9px 28px 8px rgb(0 0 0 / 5%)"
         >
-            {results.map(pub => (
-                <Box key={pub.id}>
-                    <NextLink href="/list">
-                        <Link onClick={onClick} w="100%">{pub.title}</Link>
+            {results.map((pub, i) => (
+                <Box key={pub.id} fontWeight={400} color="#5b6886" fontSize="14px" mb="2px">
+                    <NextLink href={i === 0 ? '/list/[text]' : '/publication/[id]'} as={i === 0 ? `/list/${text}` : `/publication/${pub.id}`}>
+                        <Link variant="hover-col-dark1" onClick={onClick} w="100%">{pub.title}</Link>
                     </NextLink>
                 </Box>
             ))}

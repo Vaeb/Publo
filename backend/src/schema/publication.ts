@@ -2,9 +2,28 @@ export default `
     type Publication {
         id: ID!
         title: String!
-        type: String
+        doi: String!
+        type: String!
+        year: Int!
         volume: String
-        year: Int
+        link: String
+        authors: [Author!]!
+        venue: Venue
+    }
+
+    type Author {
+        id: ID!
+        firstName: String!
+        lastName: String!
+        orcid: String
+        publications: [Publication]
+    }
+
+    type Venue {
+        id: ID!
+        title: String!
+        type: String!
+        publications: [Publication]
     }
 
     type Error {
