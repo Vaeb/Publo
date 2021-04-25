@@ -65,7 +65,7 @@ const List = ({ router, text, type: resultType }: any) => {
     if (error) return <p>{String(error)}</p>;
 
     const onItemClick = (e: any, res: GenericResult) => {
-        if (window.getSelection().toString().length > 0) return;
+        if (window?.getSelection()?.toString()?.length) return;
         e.preventDefault();
         router.push(`/${resultType}/[id]`, `/${resultType}/${res.id}`);
     };

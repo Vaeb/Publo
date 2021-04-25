@@ -200,7 +200,7 @@ const fetchDblp = async () => {
                     },
                 } : undefined;
 
-                console.log(new Date(), '|', publDoi, '|', publTitle);
+                console.log(new Date(), '|', batchNumNow, '|', publDoi, '|', publTitle);
                 // console.dir(crData, { depth: 1 });
 
                 // console.dir({
