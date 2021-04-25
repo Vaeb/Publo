@@ -46,10 +46,20 @@ const Publication = ({ id }: any): ReactElement | null => {
         };
     }
 
+    const copyText = () => {
+        if (!window) return;
+
+        window.getSelection()?.selectAllChildren(
+            document.getElementById('doi-link') as Node
+        );
+
+        /* Copy the text inside the text field */
+        document.execCommand('copy');
+    };
+
     return (
         <div>
-            <Box bg="#f2f2f2" w="calc(100%)" boxShadow="" borderRadius="0px" padding="30px 0" >
-                {/* <Box h="25px" /> */}
+            <Box bg="#e5e5e5" w="calc(100%)" boxShadow="8px 8px 21px #bebebe, -8px -8px 21px #ffffff" borderRadius="0px" padding="30px 0" pos="relative" >
                 <Flex justifyContent="center">
                     <Box w="50%">
                         <span>{publ.year}</span>{publ.venue ? <>
@@ -63,14 +73,18 @@ const Publication = ({ id }: any): ReactElement | null => {
                                 <Link>{`${author.firstName} ${author.lastName}`}</Link>
                             </span>
                         ))}
-                        <Box>
-                            <Link href={publ.pdfUrl} isExternal>🔗 Source</Link>
+                        <Box fontSize="13px" opacity={0.9} p="5px 0">
+                            <span className="interactive" onClick={copyText}>DOI: </span><Link id="doi-link" href={`https://doi.org/${publ.doi}`}>{publ.doi}</Link>
                         </Box>
+                        {publ.pdfUrl
+                            ? <Box fontSize="15px">
+                                <Link href={publ.pdfUrl} isExternal>🔗 PDF</Link>
+                            </Box>
+                            : null}
                     </Box>
 
                 </Flex>
                 <Flex justifyContent="center" />
-                {/* <Box h="25px" /> */}
             </Box>
             <Box>
                 <Center h="50vh">

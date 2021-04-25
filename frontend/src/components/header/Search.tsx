@@ -98,8 +98,8 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
                             as: { pathname: `/list/${text}`, query: listQuery },
                         }
                         : {
-                            href: { pathname: `/${resultType}/[id]` },
-                            as: { pathname: `/${resultType}/${res.id}` },
+                            href: { pathname: `/${res.resultType}/[id]` },
+                            as: { pathname: `/${res.resultType}/${res.id}` },
                         }
                     )}>
                         <Link variant="hover-col-dark1" onClick={onClick} w="100%">

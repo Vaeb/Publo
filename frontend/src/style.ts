@@ -96,4 +96,8 @@ export default createGlobalStyle`
         height: 19px;
         margin-right: 6px;
     }
+
+    .interactive {
+        cursor: pointer;
+    }
 `;

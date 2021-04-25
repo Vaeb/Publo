@@ -141,7 +141,7 @@ const fetchDblp = async () => {
                 return crData;
             }))).filter((crData: any) => crData != undefined);
 
-            const resultQueries = crDataAll.map((crData: any, idx: number) => {
+            const resultQueries = crDataAll.map((crData: any) => {
                 // if (enabled === false) return undefined;
 
                 let venueType = 'Unknown';
