@@ -32,44 +32,72 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 console.log('Aggregating publications...');
 
-interface Record {
-    title: string
-    type: string
-    year: number
-    volume?: string
-    venue?: string
-    link?: string
-}
+// interface Record {
+//     title: string
+//     type: string
+//     year: number
+//     volume?: string
+//     venue?: string
+//     link?: string
+// }
 
 const fetchDblp = async () => {
     let enabled = true;
 
+    let startAt: any = [2011, 3560];
+
+    // const dblpSize = 1000;
+    const dblpSize = 20;
+    // const dblpSize = 2;
     const minYear = 1936;
     const maxYear = new Date().getFullYear();
-    // const query = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i).join('|');
-    const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => [v + i, 0]);
+    // const dblpYear = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i).join('|');
+    const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => [v + i, -dblpSize]);
+    // const queryOptions = new Array(maxYear - 1998 + 1).fill(1998).map((v, i) => [v + i, -dblpSize + 20]);
     let numOptions = queryOptions.length;
     let queryIndex = -1;
-
-    // const size = 1000;
-    const size = 5;
-    // const size = 2;
+    let batchNum = 0;
+    const defaultSleep = 1500;
+    const shortSleep = 500;
+    let nextSleep = defaultSleep;
 
     while (enabled) {
+        const batchNumNow = ++batchNum;
+
         console.log('\nFetching...');
 
         queryIndex = (queryIndex + 1) % numOptions;
         const queryIndexNow = queryIndex;
-        const [query, first] = queryOptions[queryIndexNow];
-        console.log(queryIndexNow, query, first);
+        queryOptions[queryIndexNow][1] += dblpSize;
+        const [dblpYear, dblpOffset] = queryOptions[queryIndexNow];
+        console.log(queryIndexNow, dblpYear, dblpOffset);
+
+        if (startAt) {
+            if (dblpYear < startAt[0] || dblpOffset < startAt[1]) {
+                continue;
+            } else {
+                startAt = null;
+            }
+        }
+
+        await sleep(nextSleep);
+        nextSleep = shortSleep;
 
         try {
-            const { data, ...response } = await axios.get(`${dblpUrl}?q=${query}&format=json&h=${size}&f=${first}`);
-            console.log('fetchDblp response', size, first, 'status', response.status, 'statusText', response.statusText);
+            const dblpUrlNow = `${dblpUrl}?q=${dblpYear}&format=json&h=${dblpSize}&f=${dblpOffset}`;
+            const { data, ...response } = await axios.get(dblpUrlNow);
+            console.log('fetchDblp response', dblpSize, dblpOffset, 'status', response.status, 'statusText', response.statusText, `(${dblpUrlNow})`);
 
-            const results = data.result.hits.hit;
+            let results = data.result.hits.hit;
 
-            if (results === undefined) {
+            results = (results || [])
+                .filter(({ info: sourceResult }: any) => sourceResult.doi != undefined)
+                .map(({ info: sourceResult }: any) => {
+                    sourceResult.doi = sourceResult.doi.toLowerCase();
+                    return sourceResult;
+                });
+
+            if (results.length === 0) {
                 console.log('No results for query!');
                 queryOptions.splice(queryIndex, 1);
                 numOptions--;
@@ -77,82 +105,152 @@ const fetchDblp = async () => {
                 continue;
             }
 
+            const firstResultInDb = await prisma.publication.findFirst({
+                where: {
+                    doi: results[0].doi,
+                },
+            });
+
+            if (firstResultInDb != null) {
+                console.log('Data already exists, skipping...');
+                continue;
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-loop-func
-            const newRecords: Record[] = await Promise.all(results.map(async ({ info }: any) => {
-                // console.log('fetching', `${crossRefWorksUrl}${info.doi}`);
+            const crDataAll: any = (await Promise.all(results.map(async (sourceResult: any) => {
+                // console.log('fetching', `${crossRefWorksUrl}${sourceResult.doi}`);
 
-                const { data: crossRefData }: any = await axios.get(`${crossRefWorksUrl}${info.doi}`);
-                const crossRefInfo = crossRefData.message;
-                // console.log(crossRefInfo);
+                let crData: any;
 
-                // const record: Record = {
-                //     title: crossRefInfo.title[0],
-                //     type: crossRefInfo.type,
-                //     year: crossRefInfo.created['date-parts'][0][0],
-                //     volume: crossRefInfo.volume,
-                //     venue: crossRefInfo['container-title'],
-                //     link: crossRefInfo.link[0]?.URL,
-                // };
+                try {
+                    const { data: crResult }: any = await axios.get(`${crossRefWorksUrl}${sourceResult.doi}`);
+                    crData = crResult.message;
+                } catch (err) {
+                    if (err.response && err.response.status === 404) {
+                        console.log(`----------- ${err.response.status} CrossRef failed (suppressed):`, err);
+                        return undefined;
+                    }
+                    // throw err;
+                    console.log(`>>>>>>>>>>> ${err.response.status} CrossRef failed:`, err);
+                    nextSleep = 1000 * 60;
+                    return undefined;
+                }
+                // console.log(crData);
+
+                return crData;
+            }))).filter((crData: any) => crData != undefined);
+
+            const resultQueries = crDataAll.map((crData: any, idx: number) => {
+                // if (enabled === false) return undefined;
 
                 let venueType = 'Unknown';
-                if (crossRefInfo.type.startsWith('journal')) {
+                if (crData.type.startsWith('journal')) {
                     venueType = 'Journal';
-                } else if (crossRefInfo.type.startsWith('proceedings')) {
+                } else if (crData.type.startsWith('proceedings')) {
                     venueType = 'Conference';
                 }
 
-                const output = await prisma.publication.upsert({
-                    where: { title: crossRefInfo.title[0] },
+                const publTitle = crData.title[0];
+                const publDoi = crData.DOI.toLowerCase();
+                const publType = crData.type;
+                const publYear = crData.created['date-parts'][0][0];
+                const publVolume = crData.volume;
+                const publLink = crData.link?.[0]?.URL;
+                let authorList = (crData.author || []);
+                const venueList = crData['container-title'];
+                const venueTitle = venueList?.[0];
+
+                authorList = authorList
+                    .filter((author: any) => author.given != undefined && author.family != undefined)
+                    .map((author: any) => {
+                        author.given = author.given.replace(/[^a-z\- .,']+/ig, '');
+                        author.family = author.family.replace(/[^a-z\- .,']+/ig, '');
+                        return author;
+                    });
+
+                if (!publTitle || !publDoi) {
+                    console.log('No title on CrossRef, skipping...');
+                    return undefined;
+                }
+
+                const authorConnects = authorList
+                    .map((author: any) => (
+                        {
+                            create: { firstName: author.given, lastName: author.family, fullName: `${author.given} ${author.family}`, orcid: author.ORCID },
+                            where: { fullName: `${author.given} ${author.family}` },
+                        }
+                    ));
+
+                const venueConnects = venueTitle !== undefined ? {
+                    connectOrCreate: {
+                        create: { title: venueTitle, type: venueType },
+                        where: { title: venueTitle },
+                    },
+                } : undefined;
+
+                // console.log('QQ', new Date(), crData.title.length > 1 ? crData.title : publTitle);
+                // console.dir(crData, { depth: 1 });
+
+                console.dir({
+                    nowStamp: new Date(),
+                    batch: batchNumNow,
+                    idx,
+                    doi: publDoi,
+                    publicationTitle: crData.title.length > 1 ? crData.title : publTitle,
+                    connectOrCreateAuthor: authorConnects,
+                    connectOrCreateVenue: venueConnects,
+                }, { depth: Infinity });
+
+                return prisma.publication.upsert({
+                    where: { title: publTitle },
                     update: {},
                     create: {
-                        title: crossRefInfo.title[0],
-                        doi: crossRefInfo.DOI,
-                        type: crossRefInfo.type,
-                        year: crossRefInfo.created['date-parts'][0][0],
-                        volume: crossRefInfo.volume,
-                        link: crossRefInfo.link[0]?.URL,
+                        title: publTitle,
+                        doi: publDoi,
+                        type: publType,
+                        year: publYear,
+                        volume: publVolume,
+                        link: publLink,
+                        // authors: {
+                        //     connectOrCreate: crData.author.map((author: any) => (
+                        //         {
+                        //             create: { firstName: author.given, lastName: author.family, orcid: author.ORCID },
+                        //             where: { lastName: author.family },
+                        //         }
+                        //     )),
+                        // },
                         authors: {
-                            connectOrCreate: crossRefInfo.author.map((author: any) => (
-                                {
-                                    create: { firstName: author.given, lastName: author.family, orcid: author.ORCID },
-                                    where: { lastName: author.family },
-                                }
-                            )),
+                            connectOrCreate: authorConnects,
                         },
                         // authors: {
-                        //     create: crossRefInfo.author.map((author: any) => (
+                        //     create: crData.author.map((author: any) => (
                         //         { firstName: author.given, lastName: author.family, orcid: author.ORCID }
                         //     )),
                         // },
-                        venue: crossRefInfo['container-title'] ? {
-                            connectOrCreate: {
-                                create: { title: crossRefInfo['container-title'][0], type: venueType },
-                                where: { title: crossRefInfo['container-title'][0] },
-                            },
-                        } : undefined,
+                        venue: venueConnects,
                     },
                 });
+            }).filter((query: any) => query != undefined);
 
-                // console.log('output', output);
+            // console.log(resultQueries);
 
-                return output;
-            }));
+            await prisma.$transaction(resultQueries);
 
             // const output = await prisma.publication.createMany({ data: newRecords, skipDuplicates: true });
             // console.log('>> create output:');
             // console.dir(output, { depth: null });
 
-            console.log(`Done, ${newRecords.length} copies found`);
+            console.log(`Done, ran ${resultQueries.length} queries`);
         } catch (err) {
-            console.log('fetchDblp failed');
+            enabled = false;
+            console.log('[Aggregation failed]:');
             console.error(err);
             break;
         }
 
-        queryOptions[queryIndexNow][1] += size;
+        if (nextSleep === shortSleep) nextSleep = defaultSleep;
 
         // return;
-        await sleep(1500);
     }
 
     console.log('Finished fetching!');

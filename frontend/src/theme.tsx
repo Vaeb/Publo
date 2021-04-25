@@ -52,6 +52,14 @@ const theme = extendTheme({
                 },
             },
         },
+        Popover: {
+            baseStyle: {
+                popper: {
+                    width: 'fit-content',
+                    maxWidth: 'fit-content',
+                },
+            },
+        },
     },
 });
 

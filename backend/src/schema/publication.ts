@@ -1,6 +1,7 @@
 export default `
     type Publication {
         id: ID!
+        resultType: String!
         title: String!
         doi: String!
         type: String!
@@ -13,6 +14,7 @@ export default `
 
     type Author {
         id: ID!
+        resultType: String!
         firstName: String!
         lastName: String!
         orcid: String
@@ -21,6 +23,7 @@ export default `
 
     type Venue {
         id: ID!
+        resultType: String!
         title: String!
         type: String!
         publications: [Publication]
@@ -37,9 +40,16 @@ export default `
         publication: Publication
     }
 
+    type Result {
+        id: ID!
+        resultType: String!
+        text: String!
+    }
+
     type Query {
         getPublication(id: Int!): Publication!
         getAllPublications(limit: Int): [Publication!]!
+        findResults(text: String!, resultType: String, limit: Int): [Result]!
         findPublications(text: String!, type: String, limit: Int): [Publication]!
     }
 

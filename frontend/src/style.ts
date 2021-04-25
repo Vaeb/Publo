@@ -59,4 +59,41 @@ export default createGlobalStyle`
         padding-left: 10px;
         padding-right: 10px;
     }
+
+    .st-button {
+        padding: 4px 2px 4px 2px;
+        margin-left: 2px;
+        margin-right: 2px;
+        background: none;
+        min-width: initial;
+        height: auto;
+    }
+
+    .st-button.selected {
+        /* background: var(--chakra-colors-gray-200); */
+    }
+
+    .st-button:hover {
+        background: #333333;
+    }
+
+    .st-button.selected:hover {
+        background: none;
+    }
+
+    .st-button .st-icon {
+        width: 21px;
+        height: 21px;
+        color: #ced4d9;
+    }
+
+    .st-button.selected .st-icon {
+        color: #333333;
+    }
+
+    .sr-icon {
+        width: 19px;
+        height: 19px;
+        margin-right: 6px;
+    }
 `;

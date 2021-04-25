@@ -29,12 +29,9 @@ const getPublication = gql`
     }
 `;
 
-const Publication = (): ReactElement | null => {
-    const router = useRouter();
-    const { id } = router.query;
-
+const Publication = ({ id }: any): ReactElement | null => {
     const { loading, error, data } = useQuery(getPublication, {
-        variables: { id: Number(id) },
+        variables: { id },
     });
 
     if (loading) return null;
@@ -44,8 +41,8 @@ const Publication = (): ReactElement | null => {
 
     return (
         <div>
-            <Box bg="#f2f2f2" w="calc(100%)" boxShadow="" borderRadius="0px" >
-                <Box h="25px" />
+            <Box bg="#f2f2f2" w="calc(100%)" boxShadow="" borderRadius="0px" padding="30px 0" >
+                {/* <Box h="25px" /> */}
                 <Flex justifyContent="center">
                     <Box w="50%">
                         <span>{publ.year}</span>{publ.venue && <>
@@ -53,10 +50,12 @@ const Publication = (): ReactElement | null => {
                             <Link>{publ.venue.title}</Link>
                         </>}
                         <Heading mt="0" size="lg" color="#1c1d1e">{publ.title}</Heading>
-                        {publ.authors.map((author, i) => (<>
-                            {i > 0 && <span> • </span>}
-                            <Link>{`${author.firstName} ${author.lastName}`}</Link>
-                        </>))}
+                        {publ.authors.map((author: any, i: number) => (
+                            <span key={i}>
+                                {i > 0 && <span> • </span>}
+                                <Link>{`${author.firstName} ${author.lastName}`}</Link>
+                            </span>
+                        ))}
                         <Box>
                             <Link href={publ.link} isExternal>🔗 Source</Link>
                         </Box>
@@ -64,7 +63,7 @@ const Publication = (): ReactElement | null => {
 
                 </Flex>
                 <Flex justifyContent="center" />
-                <Box h="25px" />
+                {/* <Box h="25px" /> */}
             </Box>
             <Box>
                 <Center h="50vh">
@@ -76,10 +75,17 @@ const Publication = (): ReactElement | null => {
     );
 };
 
-const PublicationWrapper = (): ReactElement => (
-    <Box>
-        <Publication />
-    </Box>
-);
+const PublicationWrapper = (): ReactElement | null => {
+    const router = useRouter();
+    const { id } = router.query;
+
+    if (id == null) return null;
+
+    return (
+        <Box>
+            <Publication id={Number(id)} />
+        </Box>
+    );
+};
 
 export default PublicationWrapper;
