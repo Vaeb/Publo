@@ -1,6 +1,7 @@
 // import path from 'path';
 // import { makeExecutableSchema } from '@graphql-tools/schema';
-// import { mergeTypeDefs, mergeResolvers } from '@graphql-tools/merge';
+// import { stitchSchemas } from '@graphql-tools/stitch';
+// import { mergeSchemas } from '@graphql-tools/merge';
 // import { loadFilesSync } from '@graphql-tools/load-files';
 
 import { ApolloServer } from 'apollo-server-express';
@@ -21,6 +22,21 @@ console.log('[IORM] Initializing Prisma...');
 export const prisma = new PrismaClient();
 
 console.log('[IORM] Done!');
+
+// const schemas = [];
+// for (const schemaName of Object.keys(typeDefs)) {
+//     console.dir({
+//         typeDefs: (typeDefs as any)[schemaName],
+//         resolvers: (resolvers as any)[schemaName],
+//     }, { depth: Infinity });
+//     const schema = makeExecutableSchema({
+//         typeDefs: (typeDefs as any)[schemaName],
+//         resolvers: (resolvers as any)[schemaName],
+//     });
+//     schemas.push({ schema });
+// }
+
+// const fullSchema = stitchSchemas({ subschemas: schemas, mergeTypes: true });
 
 export const listen = async (): Promise<void> => {
     console.log('[SGQL] Starting GraphQL server...');

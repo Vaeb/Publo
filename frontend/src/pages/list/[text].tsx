@@ -2,10 +2,13 @@ import React, { ReactElement } from 'react';
 import { useRouter } from 'next/router';
 import { gql, useQuery } from '@apollo/client';
 import {
-    Box, VStack, StackDivider, Text, Link, Button,
+    Box, VStack, StackDivider, Text, Link, Button, Icon,
 } from '@chakra-ui/react';
 import he from 'he';
 import NextLink from 'next/link';
+import { IoBookOutline, IoLogoTableau, IoNewspaperOutline, IoPersonCircleOutline } from 'react-icons/io5';
+import { IconType } from 'react-icons/lib';
+
 import { GenericResult } from '../../types';
 
 // const getAllPublications = gql`
@@ -26,6 +29,9 @@ const findResults = gql`
             id
             resultType
             text
+            subText1
+            subText2
+            rightText1
         }
     }
 `;
@@ -34,7 +40,7 @@ const findResults = gql`
 //     query: string
 // }
 
-const getScrollMargin = () => parseFloat(getComputedStyle(document.documentElement).marginRight);
+// const getScrollMargin = () => parseFloat(getComputedStyle(document.documentElement).marginRight);
 
 const ItemBoxShadow = `
     0 2.3px 3.6px #bfbfbf,
@@ -43,21 +49,29 @@ const ItemBoxShadow = `
     0 50px 80px #ffffff
 `;
 
-const List = ({ text }) => {
+const typeIcons: { [key: string]: IconType } = {
+    any: IoLogoTableau,
+    publication: IoBookOutline,
+    author: IoPersonCircleOutline,
+    venue: IoNewspaperOutline,
+};
+
+const List = ({ router, text, type: resultType }: any) => {
     const { loading, error, data } = useQuery(findResults, {
-        variables: { text },
+        variables: { text, resultType },
     });
 
     if (loading) return null;
     if (error) return <p>{String(error)}</p>;
 
-    const onItemClick = (e, res: GenericResult) => {
+    const onItemClick = (e: any, res: GenericResult) => {
+        if (window.getSelection().toString().length > 0) return;
         e.preventDefault();
-        router.push(href);
+        router.push(`/${resultType}/[id]`, `/${resultType}/${res.id}`);
     };
 
     return (
-        <Box mt="20px" mr={`${-getScrollMargin()}px`}>
+        <Box mt="20px" mr="15px">
             <VStack spacing={4} align="stretch" ml="15px" mr="15px">
                 {data.findResults.map((res: GenericResult, idx: number) => (
                     <Box key={idx}>
@@ -67,20 +81,26 @@ const List = ({ text }) => {
                             d="block"
                             textAlign="left"
                             fontWeight="initial"
-                            bg="#e1e1e1"
+                            fontSize="15px"
+                            bg="#e5e5e5"
                             borderRadius="20px"
+                            userSelect="text"
                             p="10px 15px"
                             boxShadow={ItemBoxShadow}
+                            lineHeight={1.45}
                             onClick={e => onItemClick(e, res)}
                         >
                             {/* <h3>{res.id}</h3> */}
-                            <Text fontWeight="bold">
-                                <NextLink href="/publication/[id]" as={`/publication/${res.id}`}>
-                                    {he.decode(res.text)}
-                                </NextLink>
-                            </Text>
-                            <p>Volume {res.resultType}</p>
-                            <p>{res.resultType}</p>
+                            <Box d="flex" alignItems="center">
+                                <Icon as={typeIcons[res.resultType]} w="17px" h="17px" mr="5px" />
+                                <Text fontWeight="bold" fontSize="16px">
+                                    <NextLink href={`/${res.resultType}/[id]`} as={`/${res.resultType}/${res.id}`}>
+                                        {he.decode(res.text)}
+                                    </NextLink>
+                                </Text>
+                            </Box>
+                            <p>{res.subText1}</p>
+                            <p>{res.subText2}</p>
                         </Button>
                     </Box>
                 ))}
@@ -92,13 +112,15 @@ const List = ({ text }) => {
 
 const ListWrapper = (): ReactElement | null => {
     const router = useRouter();
-    const { text } = router.query;
 
-    if (!text) return null;
+    const defaultParams: any = { type: 'any' };
+    const params = { ...defaultParams, ...router.query };
+
+    if (!params.text) return null;
 
     return (
         <Box>
-            <List text={text} />
+            <List router={router} {...params} />
         </Box>
     );
 };

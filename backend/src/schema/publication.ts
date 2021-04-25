@@ -6,32 +6,12 @@ export default `
         doi: String!
         type: String!
         year: Int!
+        stampCreated: String
         volume: String
-        link: String
+        pdfUrl: String
+        pageUrl: String
         authors: [Author!]!
         venue: Venue
-    }
-
-    type Author {
-        id: ID!
-        resultType: String!
-        firstName: String!
-        lastName: String!
-        orcid: String
-        publications: [Publication]
-    }
-
-    type Venue {
-        id: ID!
-        resultType: String!
-        title: String!
-        type: String!
-        publications: [Publication]
-    }
-
-    type Error {
-        path: String!
-        message: String
     }
 
     type AddPublicationResponse {
@@ -40,21 +20,13 @@ export default `
         publication: Publication
     }
 
-    type Result {
-        id: ID!
-        resultType: String!
-        text: String!
-    }
-
     type Query {
-        getPublication(id: Int!): Publication!
-        getAllPublications(limit: Int): [Publication!]!
-        findResults(text: String!, resultType: String, limit: Int): [Result]!
+        getPublication(id: Int!): Publication
+        getAllPublications(limit: Int): [Publication]!
         findPublications(text: String!, type: String, limit: Int): [Publication]!
     }
 
     type Mutation {
         addPublication(title: String!, type: String, volume: String, year: Int): AddPublicationResponse!
-        runCode(code: String!): Obj
     }
 `;

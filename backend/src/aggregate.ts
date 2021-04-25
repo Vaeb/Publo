@@ -38,13 +38,14 @@ console.log('Aggregating publications...');
 //     year: number
 //     volume?: string
 //     venue?: string
-//     link?: string
+//     pdfUrl?: string
 // }
 
 const fetchDblp = async () => {
     let enabled = true;
 
-    let startAt: any = [2011, 3560];
+    let startAt;
+    // let startAt: any = [2011, 3560];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -154,11 +155,14 @@ const fetchDblp = async () => {
                 const publDoi = crData.DOI.toLowerCase();
                 const publType = crData.type;
                 const publYear = crData.created['date-parts'][0][0];
+                const publStampCreated = new Date(crData.created.timestamp);
                 const publVolume = crData.volume;
-                const publLink = crData.link?.[0]?.URL;
+                const publPdfUrl = crData.link?.[0]?.URL;
+                const publPageUrl = crData.URL;
                 let authorList = (crData.author || []);
                 const venueList = crData['container-title'];
                 const venueTitle = venueList?.[0];
+                const venueIssn = crData.ISSN?.[0];
 
                 authorList = authorList
                     .filter((author: any) => author.given != undefined && author.family != undefined)
@@ -168,8 +172,16 @@ const fetchDblp = async () => {
                         return author;
                     });
 
-                if (!publTitle || !publDoi) {
-                    console.log('No title on CrossRef, skipping...');
+                if (!publTitle || !publDoi || !authorList.length) {
+                    let missing = '';
+                    if (!publTitle) {
+                        missing = 'title';
+                    } else if (!publDoi) {
+                        missing = 'doi';
+                    } else if (!authorList.length) {
+                        missing = 'author';
+                    }
+                    console.log(`Missing ${missing} (CrossRef), skipping...`);
                     return undefined;
                 }
 
@@ -183,23 +195,23 @@ const fetchDblp = async () => {
 
                 const venueConnects = venueTitle !== undefined ? {
                     connectOrCreate: {
-                        create: { title: venueTitle, type: venueType },
+                        create: { title: venueTitle, type: venueType, issn: venueIssn },
                         where: { title: venueTitle },
                     },
                 } : undefined;
 
-                // console.log('QQ', new Date(), crData.title.length > 1 ? crData.title : publTitle);
+                console.log(new Date(), '|', publDoi, '|', publTitle);
                 // console.dir(crData, { depth: 1 });
 
-                console.dir({
-                    nowStamp: new Date(),
-                    batch: batchNumNow,
-                    idx,
-                    doi: publDoi,
-                    publicationTitle: crData.title.length > 1 ? crData.title : publTitle,
-                    connectOrCreateAuthor: authorConnects,
-                    connectOrCreateVenue: venueConnects,
-                }, { depth: Infinity });
+                // console.dir({
+                //     nowStamp: new Date(),
+                //     batch: batchNumNow,
+                //     idx,
+                //     doi: publDoi,
+                //     publicationTitle: crData.title.length > 1 ? crData.title : publTitle,
+                //     connectOrCreateAuthor: authorConnects,
+                //     connectOrCreateVenue: venueConnects,
+                // }, { depth: Infinity });
 
                 return prisma.publication.upsert({
                     where: { title: publTitle },
@@ -209,8 +221,10 @@ const fetchDblp = async () => {
                         doi: publDoi,
                         type: publType,
                         year: publYear,
+                        stampCreated: publStampCreated,
                         volume: publVolume,
-                        link: publLink,
+                        pdfUrl: publPdfUrl,
+                        pageUrl: publPageUrl,
                         // authors: {
                         //     connectOrCreate: crData.author.map((author: any) => (
                         //         {

@@ -34,12 +34,6 @@ const typeIcons: { [key: string]: IconType } = {
     venue: IoNewspaperOutline,
 };
 
-interface SearchResultsParams {
-    text: string;
-    searchType: string;
-    onClick: () => void;
-}
-
 const RelevantIcon = (resultType: ResultType, allowAny = true, className?: string) => {
     if (!allowAny && resultType === 'any') return null;
 
@@ -47,6 +41,12 @@ const RelevantIcon = (resultType: ResultType, allowAny = true, className?: strin
         <Icon as={typeIcons[resultType]} className={className} />
     );
 };
+
+interface SearchResultsParams {
+    text: string;
+    searchType: string;
+    onClick: () => void;
+}
 
 const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     const resultType = pluralToSingular[searchType];
@@ -63,7 +63,7 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     console.log('Got data:', 'loading', loading, '_data', _data, 'data', data, 'error', error);
 
     let results: GenericResult[];
-    if (!data || !data.findResults.length) {
+    if (!data) {
         return null;
     }
 
@@ -84,6 +84,7 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
             position="absolute"
             marginTop="5px"
             borderRadius="4px"
+            zIndex={100}
             p="16px"
             lineHeight={2}
             bg="white"
@@ -140,7 +141,7 @@ const SearchTypeButton = ({ type, searchType, setSearchType }: any) => (
         </PopoverTrigger>
         <PopoverContent>
             <PopoverArrow />
-            <PopoverBody>{`${type[0].toUpperCase()}${type.slice(1)}`}</PopoverBody>
+            <PopoverBody fontSize="15px">{`${type[0].toUpperCase()}${type.slice(1)}`}</PopoverBody>
         </PopoverContent>
     </Popover>
 );

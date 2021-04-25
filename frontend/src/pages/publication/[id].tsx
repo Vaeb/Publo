@@ -15,7 +15,7 @@ const getPublication = gql`
             type
             year
             volume
-            link
+            pdfUrl
             authors {
                 id
                 firstName
@@ -31,13 +31,20 @@ const getPublication = gql`
 
 const Publication = ({ id }: any): ReactElement | null => {
     const { loading, error, data } = useQuery(getPublication, {
-        variables: { id },
+        variables: { id: Number(id) },
+        // variables: { id: -1 },
     });
 
     if (loading) return null;
     if (error) return <p>{String(error)}</p>;
 
-    const publ = data.getPublication;
+    let publ = data.getPublication;
+
+    if (publ == null) {
+        publ = {
+            authors: [],
+        };
+    }
 
     return (
         <div>
@@ -45,10 +52,10 @@ const Publication = ({ id }: any): ReactElement | null => {
                 {/* <Box h="25px" /> */}
                 <Flex justifyContent="center">
                     <Box w="50%">
-                        <span>{publ.year}</span>{publ.venue && <>
+                        <span>{publ.year}</span>{publ.venue ? <>
                             <span> • </span>
                             <Link>{publ.venue.title}</Link>
-                        </>}
+                        </> : <div>&zwnj;</div>}
                         <Heading mt="0" size="lg" color="#1c1d1e">{publ.title}</Heading>
                         {publ.authors.map((author: any, i: number) => (
                             <span key={i}>
@@ -57,7 +64,7 @@ const Publication = ({ id }: any): ReactElement | null => {
                             </span>
                         ))}
                         <Box>
-                            <Link href={publ.link} isExternal>🔗 Source</Link>
+                            <Link href={publ.pdfUrl} isExternal>🔗 Source</Link>
                         </Box>
                     </Box>
 
@@ -77,13 +84,13 @@ const Publication = ({ id }: any): ReactElement | null => {
 
 const PublicationWrapper = (): ReactElement | null => {
     const router = useRouter();
-    const { id } = router.query;
 
-    if (id == null) return null;
+    const defaultParams: any = { id: -1 };
+    const params = { ...defaultParams, ...router.query };
 
     return (
         <Box>
-            <Publication id={Number(id)} />
+            <Publication {...params} />
         </Box>
     );
 };
