@@ -10,21 +10,33 @@ generator client {
     provider = "prisma-client-js"
 }
 
+model PublicationRoot {
+    id           Int           @id @default(autoincrement())
+    title        String        @unique
+    doi          String        @unique
+    publications Publication[]
+
+    @@map("publication_roots")
+}
+
 model Publication {
-    id           Int       @id @default(autoincrement())
-    title        String    @unique
-    doi          String    @unique
-    type         String
-    year         Int
-    stampCreated DateTime?
-    volume       String?
-    pdfUrl       String?
-    pageUrl      String?
-    authors      Author[]
-    venue        Venue?    @relation(fields: [venueId], references: [id])
-    venueId      Int?
-    createdAt    DateTime  @default(now())
-    updatedAt    DateTime  @updatedAt
+    id                Int              @id @default(autoincrement())
+    publicationRoot   PublicationRoot? @relation(fields: [publicationRootId], references: [id])
+    publicationRootId Int?
+    source            String
+    title             String
+    doi               String
+    type              String
+    year              Int
+    stampCreated      DateTime?
+    volume            String?
+    pdfUrl            String?
+    pageUrl           String?
+    authors           Author[]
+    venue             Venue?           @relation(fields: [venueId], references: [id])
+    venueId           Int?
+    createdAt         DateTime         @default(now())
+    updatedAt         DateTime         @updatedAt
 
     @@map("publications")
 }

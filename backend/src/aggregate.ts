@@ -108,6 +108,7 @@ const fetchDblp = async () => {
             const firstResultInDb = await prisma.publication.findFirst({
                 where: {
                     doi: results[0].doi,
+                    source: 'crossref',
                 },
             });
 
@@ -137,10 +138,10 @@ const fetchDblp = async () => {
                 }
                 // console.log(crData);
 
-                return crData;
+                return [sourceResult, crData];
             }))).filter((crData: any) => crData != undefined);
 
-            const resultQueries = crDataAll.map((crData: any) => {
+            const resultQueries = crDataAll.map(([sourceResult, crData]: any) => {
                 // if (enabled === false) return undefined;
 
                 let venueType = 'Unknown';
@@ -149,6 +150,14 @@ const fetchDblp = async () => {
                 } else if (crData.type.startsWith('proceedings')) {
                     venueType = 'Conference';
                 }
+
+                const publRootId = await prisma.publicationRoot.findFirst({
+                    where: {
+                        OR: [
+                            { doi: sourceResult.doi },
+                        ],
+                    },
+                });
 
                 const publTitle = crData.title[0];
                 const publDoi = crData.DOI.toLowerCase();
@@ -192,12 +201,18 @@ const fetchDblp = async () => {
                         }
                     ));
 
-                const venueConnects = venueTitle !== undefined ? {
+                const venueConnect = venueTitle !== undefined ? {
                     connectOrCreate: {
                         create: { title: venueTitle, type: venueType, issn: venueIssn },
                         where: { title: venueTitle },
                     },
                 } : undefined;
+
+                const publicationRootConnect = {
+                    connect: {
+                        id: publRootId,
+                    },
+                };
 
                 console.log(new Date(), '|', batchNumNow, '|', publDoi, '|', publTitle);
                 // console.dir(crData, { depth: 1 });
@@ -209,49 +224,50 @@ const fetchDblp = async () => {
                 //     doi: publDoi,
                 //     publicationTitle: crData.title.length > 1 ? crData.title : publTitle,
                 //     connectOrCreateAuthor: authorConnects,
-                //     connectOrCreateVenue: venueConnects,
+                //     connectOrCreateVenue: venueConnect,
                 // }, { depth: Infinity });
 
-                return prisma.publication.upsert({
-                    where: { title: publTitle },
-                    update: {},
-                    create: {
-                        title: publTitle,
-                        doi: publDoi,
-                        type: publType,
-                        year: publYear,
-                        stampCreated: publStampCreated,
-                        volume: publVolume,
-                        pdfUrl: publPdfUrl,
-                        pageUrl: publPageUrl,
-                        // authors: {
-                        //     connectOrCreate: crData.author.map((author: any) => (
-                        //         {
-                        //             create: { firstName: author.given, lastName: author.family, orcid: author.ORCID },
-                        //             where: { lastName: author.family },
-                        //         }
-                        //     )),
-                        // },
-                        authors: {
-                            connectOrCreate: authorConnects,
+                return [
+                    prisma.publication.create({
+                        data: {
+                            publicationRoot: publicationRootConnect,
+                            source: 'crossref',
+                            title: publTitle,
+                            doi: publDoi,
+                            type: publType,
+                            year: publYear,
+                            stampCreated: publStampCreated,
+                            volume: publVolume,
+                            pdfUrl: publPdfUrl,
+                            pageUrl: publPageUrl,
+                            authors: {
+                                connectOrCreate: authorConnects,
+                            },
+                            venue: venueConnect,
                         },
-                        // authors: {
-                        //     create: crData.author.map((author: any) => (
-                        //         { firstName: author.given, lastName: author.family, orcid: author.ORCID }
-                        //     )),
-                        // },
-                        venue: venueConnects,
-                    },
-                });
+                    }),
+                    prisma.publication.create({
+                        data: {
+                            publicationRoot: publicationRootConnect,
+                            source: 'crossref',
+                            title: publTitle,
+                            doi: publDoi,
+                            type: publType,
+                            year: publYear,
+                            stampCreated: publStampCreated,
+                            volume: publVolume,
+                            pdfUrl: publPdfUrl,
+                            pageUrl: publPageUrl,
+                            authors: {
+                                connectOrCreate: authorConnects,
+                            },
+                            venue: venueConnect,
+                        },
+                    }),
+                ];
             }).filter((query: any) => query != undefined);
 
-            // console.log(resultQueries);
-
             await prisma.$transaction(resultQueries);
-
-            // const output = await prisma.publication.createMany({ data: newRecords, skipDuplicates: true });
-            // console.log('>> create output:');
-            // console.dir(output, { depth: null });
 
             console.log(`Done, ran ${resultQueries.length} queries`);
         } catch (err) {
