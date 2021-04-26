@@ -144,7 +144,7 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                         </Popover>
                         {publ.venue ? (
                             <>
-                                <span> • {publ.venue.type} - </span>
+                                <span> • {publ.venue.type === 'Unknown' ? '' : `${publ.venue.type} - `}</span>
                                 <NextLink href={'/venue/[id]'} as={`/venue/${publ.venue.id}`}>
                                     <Link>{publ.venue.title}</Link>
                                 </NextLink>
@@ -167,7 +167,7 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                             <span className="interactive" onClick={() => copyText('doi-link')}>
                                 DOI:{' '}
                             </span>
-                            <Link id="doi-link" href={`https://doi.org/${publ?.doi?.toUpperCase()}`}>
+                            <Link id="doi-link" target="_blank" href={`https://doi.org/${publ?.doi?.toUpperCase()}`}>
                                 {publ?.doi?.toUpperCase()}
                             </Link>
                         </Box>

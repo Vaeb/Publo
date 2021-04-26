@@ -71,7 +71,7 @@ const VenuePage = ({ id }: any): ReactElement | null => {
                             <span className="interactive" onClick={() => copyText('issn-link')}>
                                 ISSN:{' '}
                             </span>
-                            <Link id="issn-link" href={`https://portal.issn.org/resource/ISSN/${venue?.issn}`}>
+                            <Link id="issn-link" target="_blank" href={`https://portal.issn.org/resource/ISSN/${venue?.issn}`}>
                                 {venue?.issn}
                             </Link>
                         </Box>

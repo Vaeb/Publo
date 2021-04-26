@@ -73,8 +73,8 @@ const AuthorPage = ({ id }: any): ReactElement | null => {
                             <span className="interactive" onClick={() => copyText('orcid-link')}>
                                 ORCID:{' '}
                             </span>
-                            <Link id="orcid-link" href={author?.orcid}>
-                                {(author?.orcid?.match(/[\w-]+$/) || ['Unknown'])[0]}
+                            <Link id="orcid-link" target="_blank" href={author?.orcid}>
+                                {(author?.orcid?.match(/[\w-]+$/) || ['N/A'])[0]}
                             </Link>
                         </Box>
                     </Box>
