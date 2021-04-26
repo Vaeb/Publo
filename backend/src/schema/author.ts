@@ -6,7 +6,7 @@ export default `
         lastName: String!
         fullName: String!
         orcid: String
-        publications: [Publication]!
+        publications(limit: Int): [Publication]!
     }
 
     type Query {

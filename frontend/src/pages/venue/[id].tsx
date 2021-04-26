@@ -4,7 +4,6 @@ import { gql, useQuery } from '@apollo/client';
 import {
     Box, VStack, StackDivider, Center, Text, Heading, Flex, Link,
 } from '@chakra-ui/react';
-import he from 'he';
 
 import { Venue } from '../../types';
 import { copyText } from '../../utils/copyText';
@@ -50,7 +49,7 @@ const VenuePage = ({ id }: any): ReactElement | null => {
     }
 
     const genericPublications = toGeneric(venue?.publications, 'publication');
-    console.log(genericPublications);
+    const numPublications = venue?.publications?.length || 0;
 
     return (
         <div>
@@ -67,7 +66,7 @@ const VenuePage = ({ id }: any): ReactElement | null => {
                         <Heading mt="0" size="lg" color="#1c1d1e">
                             {venue.title}
                         </Heading>
-                        <Box>{venue?.publications?.length || 0} Publications</Box>
+                        <Box>{numPublications} Publication{numPublications === 1 ? '' : 's'}</Box>
                         <Box fontSize="13px" opacity={0.9} p="5px 0">
                             <span className="interactive" onClick={() => copyText('issn-link')}>
                                 ISSN:{' '}

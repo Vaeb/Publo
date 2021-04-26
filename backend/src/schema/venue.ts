@@ -5,7 +5,7 @@ export default `
         title: String!
         type: String!
         issn: String
-        publications: [Publication]!
+        publications(limit: Int): [Publication]!
     }
 
     type Query {

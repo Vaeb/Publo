@@ -21,7 +21,7 @@ export interface Publication {
     pdfUrl?: string
     pageUrl?: string
     authors: Author[]
-    venue: Venue
+    venue?: Venue
 }
 
 export interface Author {

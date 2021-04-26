@@ -1,6 +1,6 @@
 import { Author, GenericResult, Publication, ResultType, Venue } from '../types';
 
-export const toGeneric = (results: any[], resultTypeAll: ResultType = 'any'): GenericResult[] => {
+export const toGeneric = (results: any[] | undefined, resultTypeAll: ResultType = 'any', boldAuthors: any = {}): GenericResult[] => {
     if (!results) return [];
 
     return results.map((result: Publication | Author | Venue) => {
@@ -15,7 +15,7 @@ export const toGeneric = (results: any[], resultTypeAll: ResultType = 'any'): Ge
             result = result as Publication;
             genResult.text = result.title;
             genResult.subText1 = result.venue?.title;
-            genResult.subText2 = result.authors.map((author: any) => author.fullName).join(' • ');
+            genResult.subText2 = result.authors.map((author: any) => (boldAuthors[author.id] ? `**${author.fullName}**` : `${author.fullName}`)).join(' • ');
             genResult.rightText1 = String(result.year);
         }
 

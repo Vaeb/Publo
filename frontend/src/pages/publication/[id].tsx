@@ -1,10 +1,16 @@
 import React, { ReactElement } from 'react';
 import { useRouter } from 'next/router';
+import NextLink from 'next/link';
 import { gql, useQuery } from '@apollo/client';
-import { Box, VStack, StackDivider, Center, Text, Heading, Flex, Link } from '@chakra-ui/react';
-import he from 'he';
+import {
+    Box, VStack, StackDivider, Center, Text, Heading, Flex, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody,
+} from '@chakra-ui/react';
 
+import { Author, GenericResult, Publication, Venue } from '../../types';
 import { copyText } from '../../utils/copyText';
+import { toGeneric } from '../../utils/toGeneric';
+import { List } from '../../components/List/list';
+import { arrayToObj } from '../../utils/arrayToObj';
 
 const getPublication = gql`
     query($id: Int!) {
@@ -14,20 +20,72 @@ const getPublication = gql`
             doi
             type
             year
+            stampCreated
             volume
             pdfUrl
             authors {
                 id
-                firstName
-                lastName
+                fullName
+                publications(limit: 40) {
+                    id
+                    title
+                    year
+                    authors {
+                        id
+                        fullName
+                    }
+                    venue {
+                        id
+                        title
+                    }
+                }
             }
             venue {
                 id
                 title
+                type
+                publications(limit: 40) {
+                    id
+                    title
+                    year
+                    authors {
+                        id
+                        fullName
+                    }
+                    venue {
+                        id
+                        title
+                    }
+                }
             }
         }
     }
 `;
+
+const blankVenue: Venue = {
+    id: -1,
+    title: 'Loading...',
+    type: 'Loading...',
+    publications: [],
+};
+
+const blankAuthor: Author = {
+    id: -1,
+    firstName: 'Loading...',
+    lastName: 'Loading...',
+    fullName: 'Loading...',
+    publications: [],
+};
+
+const blankPublication: Publication = {
+    id: -1,
+    title: 'Loading...',
+    doi: 'Loading...',
+    type: 'Loading...',
+    year: 1980,
+    authors: [blankAuthor],
+    venue: blankVenue,
+};
 
 const PublicationPage = ({ id }: any): ReactElement | null => {
     const { loading, error, data } = useQuery(getPublication, {
@@ -38,13 +96,30 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
     if (loading) return null;
     if (error) return <p>{String(error)}</p>;
 
-    let publ = data.getPublication;
+    let publ: Publication = data.getPublication;
 
     if (publ == null) {
-        publ = {
-            authors: [],
-        };
+        publ = blankPublication;
     }
+
+    const genericPublicationsFromAuthors = (publ?.authors || []).map(author => toGeneric(author.publications, 'publication', arrayToObj(publ?.authors || [], 'id')));
+    const genericPublicationsFromVenue = toGeneric(publ?.venue?.publications, 'publication').filter((result: GenericResult) => {
+        if (result.id == publ.id) return false;
+        return true;
+    });
+
+    const foundPubl: any = {};
+    const genericPublicationsFromAuthorsUnique = genericPublicationsFromAuthors.flat(1).filter((result: GenericResult) => {
+        if (result.id == publ.id || foundPubl[result.id]) return false;
+        foundPubl[result.id] = true;
+        return true;
+    });
+
+    console.log(publ.stampCreated, String(new Date(Number(publ.stampCreated) as number)));
+
+    const publDate = publ.stampCreated
+        ? String(new Date(Number(publ.stampCreated))).replace(/ GMT.+$/, '')
+        : null;
 
     return (
         <div>
@@ -58,11 +133,21 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
             >
                 <Flex justifyContent="center">
                     <Box w="50%">
-                        <span>{publ.year}</span>
+                        <Popover trigger="hover">
+                            <PopoverTrigger>
+                                <span>{publ.year}</span>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                                <PopoverArrow />
+                                <PopoverBody fontSize="15px">{publDate}</PopoverBody>
+                            </PopoverContent>
+                        </Popover>
                         {publ.venue ? (
                             <>
-                                <span> • </span>
-                                <Link>{publ.venue.title}</Link>
+                                <span> • {publ.venue.type} - </span>
+                                <NextLink href={'/venue/[id]'} as={`/venue/${publ.venue.id}`}>
+                                    <Link>{publ.venue.title}</Link>
+                                </NextLink>
                             </>
                         ) : (
                             <div>&zwnj;</div>
@@ -70,35 +155,50 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                         <Heading mt="0" size="lg" color="#1c1d1e">
                             {publ.title}
                         </Heading>
-                        {publ.authors.map((author: any, i: number) => (
+                        {publ?.authors?.map((author: any, i: number) => (
                             <span key={i}>
                                 {i > 0 && <span> • </span>}
-                                <Link>{`${author.firstName} ${author.lastName}`}</Link>
+                                <NextLink href={'/author/[id]'} as={`/author/${author.id}`}>
+                                    <Link>{`${author.fullName}`}</Link>
+                                </NextLink>
                             </span>
                         ))}
                         <Box fontSize="13px" opacity={0.9} p="5px 0">
                             <span className="interactive" onClick={() => copyText('doi-link')}>
                                 DOI:{' '}
                             </span>
-                            <Link id="doi-link" href={`https://doi.org/${publ.doi}`}>
-                                {publ.doi}
+                            <Link id="doi-link" href={`https://doi.org/${publ?.doi?.toUpperCase()}`}>
+                                {publ?.doi?.toUpperCase()}
                             </Link>
                         </Box>
-                        {publ.pdfUrl ? (
-                            <Box fontSize="15px">
+                        <Box fontSize="15px">
+                            {publ.pdfUrl ? (
                                 <Link href={publ.pdfUrl} isExternal>
                                     🔗 PDF
                                 </Link>
-                            </Box>
-                        ) : null}
+                            ) : <Text>&zwnj;</Text>}
+                        </Box>
                     </Box>
                 </Flex>
                 <Flex justifyContent="center" />
             </Box>
-            <Box>
-                <Center h="50vh">
-                    <Text fontSize={20}>Related papers...</Text>
-                </Center>
+            <Box mt="40px" d="flex">
+                <Box width="50%">
+                    <Text ml="15px" fontSize={20}>
+                        Other publications from this venue:
+                    </Text>
+                    <Box maxH="630px" overflowY="auto">
+                        <List results={genericPublicationsFromVenue} resultTypeAll="publication" />
+                    </Box>
+                </Box>
+                <Box width="50%">
+                    <Text ml="15px" fontSize={20}>
+                        Other publications by these authors:
+                    </Text>
+                    <Box maxH="630px" overflowY="auto">
+                        <List results={genericPublicationsFromAuthorsUnique} resultTypeAll="publication" />
+                    </Box>
+                </Box>
             </Box>
             <Box h="20px" />
         </div>

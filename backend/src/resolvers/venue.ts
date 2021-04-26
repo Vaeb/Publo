@@ -1,3 +1,5 @@
+/* eslint-disable implicit-arrow-linebreak */
+
 import { Context } from '../types';
 
 export default {
@@ -9,5 +11,16 @@ export default {
                 include: { publications: true },
             });
         },
+    },
+    Venue: {
+        publications: async ({ id: recordId }: any, { limit }: any, { prisma }: Context): Promise<any> =>
+            (await prisma.venue.findUnique({
+                where: { id: recordId },
+                select: {
+                    publications: {
+                        take: limit,
+                    },
+                },
+            }))?.publications,
     },
 };

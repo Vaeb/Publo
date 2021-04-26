@@ -35,6 +35,7 @@ export const List = ({ results, resultTypeAll }: ListParams): ReactElement => {
     const onItemClick = (e: any, res: GenericResult) => {
         if (window?.getSelection()?.toString()?.length) return;
         e.preventDefault();
+        console.log(`/${res.resultType}/[id]`, `/${res.resultType}/${res.id}`);
         router.push(`/${res.resultType}/[id]`, `/${res.resultType}/${res.id}`);
     };
 

@@ -72,16 +72,16 @@ export default {
         },
     },
     Publication: {
-        venue: async ({ id: publId }: any, args: any, { prisma }: Context): Promise<any> =>
+        venue: async ({ id: recordId }: any, args: any, { prisma }: Context): Promise<any> =>
             (await prisma.publication.findUnique({
-                where: { id: publId },
+                where: { id: recordId },
                 select: {
                     venue: true,
                 },
             }))?.venue,
-        authors: async ({ id: publId }: any, args: any, { prisma }: Context): Promise<any> =>
+        authors: async ({ id: recordId }: any, args: any, { prisma }: Context): Promise<any> =>
             (await prisma.publication.findUnique({
-                where: { id: publId },
+                where: { id: recordId },
                 select: {
                     authors: true,
                 },
