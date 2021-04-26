@@ -1,46 +1,14 @@
 import React, { ReactElement } from 'react';
 import { useRouter } from 'next/router';
-import { gql, useQuery } from '@apollo/client';
+import NextLink from 'next/link';
 import {
     Box, VStack, StackDivider, Text, Link, Button, Icon,
 } from '@chakra-ui/react';
-import he from 'he';
-import NextLink from 'next/link';
 import { IoBookOutline, IoLogoTableau, IoNewspaperOutline, IoPersonCircleOutline } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
+import he from 'he';
 
-import { GenericResult } from '../../types';
-
-// const getAllPublications = gql`
-//     query {
-//         getAllPublications(limit: 50) {
-//             id
-//             title
-//             type
-//             volume
-//             year
-//         }
-//     }
-// `;
-
-const findResults = gql`
-    query($text: String!, $resultType: String) {
-        findResults(text: $text, resultType: $resultType, limit: 100) {
-            id
-            resultType
-            text
-            subText1
-            subText2
-            rightText1
-        }
-    }
-`;
-
-// interface ListArgs {
-//     query: string
-// }
-
-// const getScrollMargin = () => parseFloat(getComputedStyle(document.documentElement).marginRight);
+import { GenericResult, ResultType } from '../../types';
 
 const ItemBoxShadow = `
     0 2.3px 3.6px #bfbfbf,
@@ -56,13 +24,13 @@ const typeIcons: { [key: string]: IconType } = {
     venue: IoNewspaperOutline,
 };
 
-const List = ({ router, text, type: resultTypeAll }: any) => {
-    const { loading, error, data } = useQuery(findResults, {
-        variables: { text, resultType: resultTypeAll },
-    });
+interface ListParams {
+    results: GenericResult[];
+    resultTypeAll: ResultType
+}
 
-    if (loading) return null;
-    if (error) return <p>{String(error)}</p>;
+export const List = ({ results, resultTypeAll }: ListParams): ReactElement => {
+    const router = useRouter();
 
     const onItemClick = (e: any, res: GenericResult) => {
         if (window?.getSelection()?.toString()?.length) return;
@@ -73,7 +41,7 @@ const List = ({ router, text, type: resultTypeAll }: any) => {
     return (
         <Box mt="20px" mr="15px">
             <VStack spacing={4} align="stretch" ml="15px" mr="15px">
-                {data.findResults.map((res: GenericResult, idx: number) => (
+                {results.map((res: GenericResult, idx: number) => (
                     <Box key={idx}>
                         <Button
                             w="100%"
@@ -109,20 +77,3 @@ const List = ({ router, text, type: resultTypeAll }: any) => {
         </Box>
     );
 };
-
-const ListWrapper = (): ReactElement | null => {
-    const router = useRouter();
-
-    const defaultParams: any = { type: 'any' };
-    const params = { ...defaultParams, ...router.query };
-
-    if (!params.text) return null;
-
-    return (
-        <Box>
-            <List router={router} {...params} />
-        </Box>
-    );
-};
-
-export default ListWrapper;

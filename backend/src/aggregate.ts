@@ -65,10 +65,9 @@ const fetchDblp = async () => {
     while (enabled) {
         const batchNumNow = ++batchNum;
 
-        console.log('\nFetching...');
-
         queryIndex = (queryIndex + 1) % numOptions;
         const queryIndexNow = queryIndex;
+        console.log(`\nFetching from subset ${queryIndexNow} of ${queryOptions.length}...`);
         queryOptions[queryIndexNow][1] += dblpSize;
         const [dblpYear, dblpOffset] = queryOptions[queryIndexNow];
         console.log(queryIndexNow, dblpYear, dblpOffset);

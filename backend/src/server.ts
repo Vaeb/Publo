@@ -21,6 +21,22 @@ console.log('[IORM] Initializing Prisma...');
 
 export const prisma = new PrismaClient();
 
+// prisma.$use(async (params, next) => {
+//     const result = await next(params);
+
+//     if (['findFirst', 'findMany', 'findUnique'].includes(params.action)) {
+//         if (params.model == 'Publication') {
+//             result.resultType = 'publication';
+//         } else if (params.model == 'Author') {
+//             result.resultType = 'author';
+//         } else if (params.model == 'Venue') {
+//             result.resultType = 'venue';
+//         }
+//     }
+
+//     return result;
+// });
+
 console.log('[IORM] Done!');
 
 // const schemas = [];

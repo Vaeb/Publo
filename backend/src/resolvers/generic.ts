@@ -18,7 +18,7 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
         if (resultType === 'publication') {
             genResult.subText1 = result.venue?.title;
             genResult.subText2 = result.authors.map((author: any) => author.fullName).join(' • ');
-            genResult.rightText1 = result.year;
+            genResult.rightText1 = String(result.year);
         }
         genResults.push(genResult);
     });

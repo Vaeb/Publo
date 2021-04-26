@@ -30,7 +30,7 @@ model Publication {
 }
 
 model Author {
-    id           Int           @default(autoincrement())
+    id           Int           @unique @default(autoincrement())
     firstName    String
     lastName     String
     fullName     String        @id

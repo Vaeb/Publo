@@ -1,7 +1,7 @@
 export default `
     type Publication {
         id: ID!
-        resultType: String!
+        resultType: String
         title: String!
         doi: String!
         type: String!
