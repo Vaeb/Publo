@@ -68,12 +68,12 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     }
 
     if (error) {
-        results = [{ id: 0, resultType: 'any', text: String(error) }];
+        results = [{ id: '0', resultType: 'any', text: String(error) }];
     }
 
     results = [...data.findResults];
 
-    if (!error) results.splice(0, 0, { id: 0, resultType: 'any', text: `> Search${searchType !== 'all' ? ` ${searchType}` : ''} for '${text}'` });
+    if (!error) results.splice(0, 0, { id: '0', resultType: 'any', text: `> Search${searchType !== 'all' ? ` ${searchType}` : ''} for '${text}'` });
 
     const listQuery = {
         type: resultType,
