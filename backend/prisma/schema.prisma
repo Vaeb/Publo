@@ -47,10 +47,10 @@ model Publication {
 
 model Author {
     id           Int           @unique @default(autoincrement())
+    sourceId     String        @id
     firstName    String
     lastName     String
-    fullName     String        @id
-    sourceId     String?       @unique
+    fullName     String
     orcid        String?
     dob          String?
     publications Publication[]

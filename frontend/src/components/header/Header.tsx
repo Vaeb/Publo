@@ -43,16 +43,18 @@ const ColumnLogo = () => {
 const ColumnSearch = () => <Search />;
 
 const Header = (): ReactElement => (
-    <Box pos="relative" maxW="100%" boxShadow="0 2px 8px #f0f1f2" mb="10px">
-        <Box display="flex" h="64px">
-            <Flex w="calc(100% - 40px)" h="inherit">
-                <Box w={[`${10}%`, `${12}%`, `${12}%`, `${12}%`]} h="inherit" overflow="hidden">
-                    <ColumnLogo />
-                </Box>
-                <Box w={[`${100 - 10}%`, `${100 - 12}%`, `${100 - 12}%`, `${100 - 12}%`]} h="inherit" display="flex" alignItems="center">
-                    <ColumnSearch />
-                </Box>
-            </Flex>
+    <Box pos="relative" h="64px">
+        <Box pos="fixed" w="100%" zIndex="999" bg="white" boxShadow="0 4px 8px #f0f1f2" mb="10px">
+            <Box display="flex" h="64px">
+                <Flex w="calc(100% - 40px)" h="inherit">
+                    <Box w={[`${10}%`, `${12}%`, `${12}%`, `${12}%`]} h="inherit" overflow="hidden">
+                        <ColumnLogo />
+                    </Box>
+                    <Box w={[`${100 - 10}%`, `${100 - 12}%`, `${100 - 12}%`, `${100 - 12}%`]} h="inherit" display="flex" alignItems="center">
+                        <ColumnSearch />
+                    </Box>
+                </Flex>
+            </Box>
         </Box>
     </Box>
 );

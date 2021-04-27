@@ -3,7 +3,19 @@ import { useRouter } from 'next/router';
 import NextLink from 'next/link';
 import { gql, useQuery } from '@apollo/client';
 import {
-    Box, VStack, StackDivider, Center, Text, Heading, Flex, Link, Popover, PopoverTrigger, PopoverContent, PopoverArrow, PopoverBody,
+    Box,
+    VStack,
+    StackDivider,
+    Center,
+    Text,
+    Heading,
+    Flex,
+    Link,
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+    PopoverArrow,
+    PopoverBody,
 } from '@chakra-ui/react';
 
 import { Author, GenericResult, Publication, Venue } from '../../types';
@@ -12,10 +24,11 @@ import { toGeneric } from '../../utils/toGeneric';
 import { List } from '../../components/List/list';
 import { arrayToObj } from '../../utils/arrayToObj';
 
-const getPublication = gql`
+const getPublications = gql`
     query($id: Int!) {
-        getPublication(id: $id) {
+        getPublications(id: $id) {
             id
+            source
             title
             doi
             type
@@ -25,17 +38,16 @@ const getPublication = gql`
             pdfUrl
             authors {
                 id
+                sourceId
                 fullName
                 publications(limit: 40) {
                     id
                     title
                     year
                     authors {
-                        id
                         fullName
                     }
                     venue {
-                        id
                         title
                     }
                 }
@@ -49,11 +61,9 @@ const getPublication = gql`
                     title
                     year
                     authors {
-                        id
                         fullName
                     }
                     venue {
-                        id
                         title
                     }
                 }
@@ -63,14 +73,15 @@ const getPublication = gql`
 `;
 
 const blankVenue: Venue = {
-    id: -1,
+    id: '-1',
     title: 'Loading...',
     type: 'Loading...',
     publications: [],
 };
 
 const blankAuthor: Author = {
-    id: -1,
+    id: '-1',
+    sourceId: '-1',
     firstName: 'Loading...',
     lastName: 'Loading...',
     fullName: 'Loading...',
@@ -78,7 +89,7 @@ const blankAuthor: Author = {
 };
 
 const blankPublication: Publication = {
-    id: -1,
+    id: '-1',
     title: 'Loading...',
     doi: 'Loading...',
     type: 'Loading...',
@@ -87,8 +98,22 @@ const blankPublication: Publication = {
     venue: blankVenue,
 };
 
+const checkArrIdentical = (key: string, ...arrs: any[][]) => {
+    let idx = arrs[0].length;
+    for (let i = 1; i < arrs.length; i++) {
+        if (arrs[i].length !== idx) return false;
+    }
+    while (idx--) {
+        const baseVal = arrs[0][idx][key];
+        for (let i = 1; i < arrs.length; i++) {
+            if (baseVal !== arrs[i][idx][key]) return false;
+        }
+    }
+    return true;
+};
+
 const PublicationPage = ({ id }: any): ReactElement | null => {
-    const { loading, error, data } = useQuery(getPublication, {
+    const { loading, error, data } = useQuery(getPublications, {
         variables: { id: Number(id) },
         // variables: { id: -1 },
     });
@@ -96,30 +121,68 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
     if (loading) return null;
     if (error) return <p>{String(error)}</p>;
 
-    let publ: Publication = data.getPublication;
+    let publications: Publication[] = data.getPublications;
 
-    if (publ == null) {
-        publ = blankPublication;
+    if (publications == null) {
+        publications = [blankPublication];
     }
 
-    const genericPublicationsFromAuthors = (publ?.authors || []).map(author => toGeneric(author.publications, 'publication', arrayToObj(publ?.authors || [], 'id')));
-    const genericPublicationsFromVenue = toGeneric(publ?.venue?.publications, 'publication').filter((result: GenericResult) => {
-        if (result.id == publ.id) return false;
-        return true;
+    const publIdMap = Object.assign({}, ...publications.map(publ => ({ [publ.id]: publ })));
+    const mergedPubl = publications[0];
+    console.log('mergedPubl', mergedPubl);
+
+    const foundAuthors: { [key: string]: true } = {};
+    const foundVenues: { [key: string]: true } = {};
+
+    const allAuthors: Author[] = [];
+    const allVenues: Venue[] = [];
+
+    const publicationAuthors: any[] = [];
+
+    publications.forEach((publ) => {
+        publ.authors.forEach((author) => {
+            if (foundAuthors[author.sourceId]) return;
+            foundAuthors[author.sourceId] = true;
+            allAuthors.push(author);
+        });
+        if (publ.venue && !foundVenues[publ.venue.id]) {
+            foundVenues[publ.venue.id] = true;
+            allVenues.push(publ.venue);
+        }
+        publicationAuthors.push(publ.authors);
+        if (publ.authors.length > mergedPubl.authors.length) {
+            mergedPubl.authors = publ.authors;
+        }
+        if (!mergedPubl.venue && publ.venue) {
+            mergedPubl.venue = publ.venue;
+        }
     });
 
-    const foundPubl: any = {};
-    const genericPublicationsFromAuthorsUnique = genericPublicationsFromAuthors.flat(1).filter((result: GenericResult) => {
-        if (result.id == publ.id || foundPubl[result.id]) return false;
-        foundPubl[result.id] = true;
-        return true;
-    });
+    const authorsIsDiff = !checkArrIdentical('id', ...publicationAuthors.filter((authors: any) => authors.length));
+    console.log('authorsIsDiff', authorsIsDiff, publicationAuthors);
 
-    console.log(publ.stampCreated, String(new Date(Number(publ.stampCreated) as number)));
+    const foundPublFromAuthors: any = {};
+    const foundPublFromVenues: any = {};
 
-    const publDate = publ.stampCreated
-        ? String(new Date(Number(publ.stampCreated))).replace(/ GMT.+$/, '')
-        : null;
+    const genericPublicationsFromAuthors = allAuthors
+        .map((author: Author) => toGeneric(author.publications, 'publication', arrayToObj(allAuthors, 'id')))
+        .flat(1)
+        .filter((result: GenericResult) => {
+            if (publIdMap[result.id] || foundPublFromAuthors[result.id]) return false;
+            foundPublFromAuthors[result.id] = true;
+            return true;
+        });
+
+    const genericPublicationsFromVenue = allVenues
+        .map((venue: Venue) => toGeneric(venue.publications, 'publication'))
+        .flat(1)
+        .filter((result: GenericResult) => {
+            if (publIdMap[result.id] || foundPublFromVenues[result.id]) return false;
+            foundPublFromVenues[result.id] = true;
+            return true;
+        });
+
+    const publDate = mergedPubl.stampCreated ? String(new Date(Number(mergedPubl.stampCreated))).replace(/ GMT.+$/, '') : null;
 
     return (
         <div>
@@ -129,54 +192,63 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                 boxShadow="8px 8px 21px #bebebe, -8px -8px 21px #ffffff"
                 borderRadius="0px"
                 padding="30px 0"
+                mt="10px"
                 pos="relative"
             >
                 <Flex justifyContent="center">
                     <Box w="50%">
                         <Popover trigger="hover">
                             <PopoverTrigger>
-                                <span>{publ.year}</span>
+                                <span>{mergedPubl.year}</span>
                             </PopoverTrigger>
                             <PopoverContent>
                                 <PopoverArrow />
                                 <PopoverBody fontSize="15px">{publDate}</PopoverBody>
                             </PopoverContent>
                         </Popover>
-                        {publ.venue ? (
+                        {mergedPubl.venue ? (
                             <>
-                                <span> • {publ.venue.type === 'Unknown' ? '' : `${publ.venue.type} - `}</span>
-                                <NextLink href={'/venue/[id]'} as={`/venue/${publ.venue.id}`}>
-                                    <Link>{publ.venue.title}</Link>
-                                </NextLink>
+                                <span> • {mergedPubl.venue.type === 'Unknown' ? '' : `${mergedPubl.venue.type} - `}</span>
+                                <Text display="inline" _hover={{ textDecoration: 'underline' }}>
+                                    <NextLink href={'/venue/[id]'} as={`/venue/${mergedPubl.venue.id}`}>
+                                        {mergedPubl.venue.title}
+                                    </NextLink>
+                                </Text>
                             </>
                         ) : (
                             <div>&zwnj;</div>
                         )}
                         <Heading mt="0" size="lg" color="#1c1d1e">
-                            {publ.title}
+                            {mergedPubl.title}
                         </Heading>
-                        {publ?.authors?.map((author: any, i: number) => (
-                            <span key={i}>
-                                {i > 0 && <span> • </span>}
-                                <NextLink href={'/author/[id]'} as={`/author/${author.id}`}>
-                                    <Link>{`${author.fullName}`}</Link>
-                                </NextLink>
-                            </span>
-                        ))}
+                        <Box>
+                            {mergedPubl.authors.map((author: any, i: number) => (
+                                <span key={i}>
+                                    {i > 0 && <span> • </span>}
+                                    <Text display="inline" _hover={{ textDecoration: 'underline' }}>
+                                        <NextLink href={'/author/[id]'} as={`/author/${author.id}`}>
+                                            {`${author.fullName}`}
+                                        </NextLink>
+                                    </Text>
+                                </span>
+                            ))}
+                        </Box>
                         <Box fontSize="13px" opacity={0.9} p="5px 0">
                             <span className="interactive" onClick={() => copyText('doi-link')}>
                                 DOI:{' '}
                             </span>
-                            <Link id="doi-link" target="_blank" href={`https://doi.org/${publ?.doi?.toUpperCase()}`}>
-                                {publ?.doi?.toUpperCase()}
+                            <Link id="doi-link" target="_blank" href={`https://doi.org/${mergedPubl.doi.toUpperCase()}`}>
+                                {mergedPubl.doi.toUpperCase()}
                             </Link>
                         </Box>
                         <Box fontSize="15px">
-                            {publ.pdfUrl ? (
-                                <Link href={publ.pdfUrl} isExternal>
+                            {mergedPubl.pdfUrl ? (
+                                <Link href={mergedPubl.pdfUrl} isExternal>
                                     🔗 PDF
                                 </Link>
-                            ) : <Text>&zwnj;</Text>}
+                            ) : (
+                                <Text>&zwnj;</Text>
+                            )}
                         </Box>
                     </Box>
                 </Flex>
@@ -196,7 +268,7 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                         Other publications by these authors:
                     </Text>
                     <Box maxH="630px" overflowY="auto">
-                        <List results={genericPublicationsFromAuthorsUnique} resultTypeAll="publication" />
+                        <List results={genericPublicationsFromAuthors} resultTypeAll="publication" />
                     </Box>
                 </Box>
             </Box>

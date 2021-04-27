@@ -45,8 +45,9 @@ module.exports = {
             { allowArgumentsExplicitlyTypedAsAny: true },
         ],
         // 'func-names': 'off',
+        'function-paren-newline': 'off',
         'global-require': 'off',
-        // * 'implicit-arrow-linebreak': 'off',
+        'implicit-arrow-linebreak': 'off', // good?
         'import/extensions': 'off',
         'import/prefer-default-export': 'off',
         'import/no-dynamic-require': 'off',

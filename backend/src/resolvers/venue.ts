@@ -18,6 +18,7 @@ export default {
                 where: { id: recordId },
                 select: {
                     publications: {
+                        where: { source: 'merged' },
                         take: limit,
                     },
                 },

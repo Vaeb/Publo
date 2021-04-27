@@ -10,7 +10,7 @@ export interface GenericResult {
 }
 
 export interface Publication {
-    id: number
+    id: string
     resultType?: string
     title: string
     doi: string
@@ -18,6 +18,8 @@ export interface Publication {
     year: number
     stampCreated?: string
     volume?: string
+    number?: string
+    pages?: string
     pdfUrl?: string
     pageUrl?: string
     authors: Author[]
@@ -25,7 +27,8 @@ export interface Publication {
 }
 
 export interface Author {
-    id: number
+    id: string
+    sourceId: string
     resultType?: string
     firstName: string
     lastName: string
@@ -35,7 +38,7 @@ export interface Author {
 }
 
 export interface Venue {
-    id: number
+    id: string
     resultType?: string
     title: string
     type: string

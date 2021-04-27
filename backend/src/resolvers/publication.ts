@@ -16,18 +16,77 @@ RegExp.escape = str => (
 
 export default {
     Query: {
-        getPublication: (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
+        getPublications: async (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
+            console.log('Received request for getPublications:', id);
+
+            const { publicationRoot } = (await prisma.publication.findUnique({
+                where: { id },
+                select: {
+                    publicationRoot: {
+                        select: {
+                            publications: {
+                                include: { authors: true, venue: true },
+                            },
+                        },
+                    },
+                },
+            }) || {});
+
+            if (!publicationRoot?.publications) return undefined;
+
+            // let { publications } = (await prisma.publicationRoot.findUnique({
+            //     where: { id: rootId },
+            //     select: {
+            //         publications: {
+            //             include: { authors: true, venue: true },
+            //         },
+            //     },
+            // }) || {});
+
+            let { publications } = publicationRoot;
+            let mergedPubl = publications[0];
+            publications = publications.filter((publ) => {
+                if (publ.source === 'merged') {
+                    mergedPubl = publ;
+                    return false;
+                }
+                return true;
+            });
+            publications.unshift(mergedPubl);
+
+            // console.log(publications);
+
+            return publications;
+        },
+        getPublication: async (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
             console.log('Received request for getPublication:', id);
             return prisma.publication.findUnique({
                 where: { id },
                 include: { authors: true, venue: true },
             });
         },
-        getAllPublications: (_parent: any, { limit }: any, { prisma }: Context): Promise<any> =>
-            prisma.publication.findMany({
+        getMergedPublication: async (_parent: any, { rootId }: any, { prisma }: Context): Promise<any> => {
+            console.log('Received request for getMergedPublication:', rootId);
+            return prisma.publication.findFirst({
+                where: { publicationRootId: rootId, source: 'merged' },
+                include: { authors: true, venue: true },
+            });
+        },
+        getAllPublications: async (_parent: any, { limit }: any, { prisma }: Context): Promise<any> => {
+            const results = await prisma.publicationRoot.findMany({
+                select: {
+                    publications: {
+                        where: { source: 'merged' },
+                    },
+                },
                 orderBy: { title: 'asc' },
                 take: limit,
-            }),
+            });
+
+            // console.dir(results, { depth: Infinity });
+
+            return results.map(result => result.publications[0]);
+        },
         findPublications: async (_parent: any, { text, limit }: any, { prisma }: Context): Promise<any> => {
             console.log('Received request for findPublications:', text);
 
@@ -83,7 +142,11 @@ export default {
             (await prisma.publication.findUnique({
                 where: { id: recordId },
                 select: {
-                    authors: true,
+                    authors: {
+                        orderBy: {
+                            fullName: 'asc',
+                        },
+                    },
                 },
             }))?.authors,
     },

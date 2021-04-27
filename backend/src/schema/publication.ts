@@ -1,6 +1,7 @@
 export default `
     type Publication {
         id: ID!
+        source: String
         resultType: String
         title: String!
         doi: String!
@@ -8,6 +9,8 @@ export default `
         year: Int!
         stampCreated: String
         volume: String
+        number: String
+        pages: String
         pdfUrl: String
         pageUrl: String
         authors: [Author!]!
@@ -21,7 +24,9 @@ export default `
     }
 
     type Query {
-        getPublication(id: Int!): Publication
+        getPublications(id: Int!): [Publication]
+        getPublication(rootId: Int!): Publication
+        getMergedPublication(id: Int!): Publication
         getAllPublications(limit: Int): [Publication]!
         findPublications(text: String!, type: String, limit: Int): [Publication]!
     }

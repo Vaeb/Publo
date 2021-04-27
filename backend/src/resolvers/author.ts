@@ -13,11 +13,12 @@ export default {
         },
     },
     Author: {
-        publications: async ({ id: recordId }: any, { limit }: any, { prisma }: Context): Promise<any> =>
+        publications: async ({ id: recordId }: any, { limit, merged }: any, { prisma }: Context): Promise<any> =>
             (await prisma.author.findUnique({
                 where: { id: recordId },
                 select: {
                     publications: {
+                        where: { source: merged ? 'merged' : undefined },
                         take: limit,
                     },
                 },

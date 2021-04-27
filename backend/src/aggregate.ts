@@ -75,16 +75,34 @@ const parsePublicationType = (value: string) => {
     return newValue;
 };
 
-const parseAuthorName = (name?: string) => (name == null ? undefined : name.replace(/[^a-z\- .,']+/ig, ''));
+// normalize decomposes accents into separate character, then the regex removes the character (as well as other bad stuff in the string)
+const parseAuthorName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, ''));
 
-const parseVenueName = (name?: string) => (name == null ? undefined : name.replace(/^\W+|\W+$/ig, ''));
+const parseVenueName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, ''));
+
+const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
+    fullName = fullName.toLowerCase();
+    const nameParts = fullName.replace(/[^ a-zA-Z.,-]+/g, '').split(/[ .,-]+/); // John Park-Wave; C.W.Park
+    if (/\b(?:mr|mrs|miss|ms|dr|doctor|sir|lady|professor|prof)\b/i.test(nameParts[0])) {
+        nameParts.splice(0, 1);
+    }
+    if (nameParts.length === 0) return fullName;
+    if (nameParts.length === 1) return nameParts[0];
+    return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
+};
+
+const crPriority = {
+    firstName: true,
+    lastName: true,
+    fullName: true,
+};
 
 const mergeAuthorData = (authors1: any, authors2: any) => {
     const authorKeys = [...new Set([...Object.keys(authors1[0] || []), ...Object.keys(authors2[0] || [])])];
-    const authors2Obj = Object.assign({}, ...authors2.map((author2: any) => ({ [author2.fullName]: author2 })));
+    const authors2Obj = Object.assign({}, ...authors2.map((author2: any) => ({ [getSimpleName(author2.fullName)]: author2 })));
 
     for (const author1 of authors1) {
-        const author2 = authors2Obj[author1.fullName];
+        const author2 = authors2Obj[getSimpleName(author1.fullName)];
         if (author2) {
             for (const key of authorKeys) {
                 if (author1[key] === undefined) {
@@ -117,13 +135,13 @@ const getMergedPublData = (publ1: any, publ2: any) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    let startAt;
-    // let startAt: any = [2011, 3560];
+    // let startAt;
+    let startAt: any = [1956, 240];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
     // const dblpSize = 2;
-    const minYear = 1936;
+    const minYear = 1936; // 1936
     const maxYear = new Date().getFullYear();
     // const dblpYear = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => v + i).join('|');
     const queryOptions = new Array(maxYear - minYear + 1).fill(minYear).map((v, i) => [v + i, -dblpSize]);
@@ -140,10 +158,10 @@ const fetchDblp = async () => {
 
         queryIndex = (queryIndex + 1) % numOptions;
         const queryIndexNow = queryIndex;
-        console.log(`\nFetching from subset ${queryIndexNow} of ${queryOptions.length}...`);
         queryOptions[queryIndexNow][1] += dblpSize;
         const [dblpYear, dblpOffset] = queryOptions[queryIndexNow];
-        console.log(queryIndexNow, dblpYear, dblpOffset);
+        console.log('------------------------------------------------------------------------------------------------------------------');
+        console.log(queryIndexNow, '/', queryOptions.length, dblpYear, dblpOffset);
 
         if (startAt) {
             if (dblpYear < startAt[0] || dblpOffset < startAt[1]) {
@@ -178,14 +196,14 @@ const fetchDblp = async () => {
                 continue;
             }
 
-            const firstResultInDb = await prisma.publication.findFirst({
+            const lastResultInDb = await prisma.publication.findFirst({
                 where: {
-                    doi: results[0].doi,
-                    source: 'crossref',
+                    doi: results[results.length - 1].doi,
+                    source: 'merged',
                 },
             });
 
-            if (firstResultInDb != null) {
+            if (lastResultInDb != null) {
                 console.log('Data already exists, skipping...');
                 continue;
             }
@@ -205,8 +223,11 @@ const fetchDblp = async () => {
                         return undefined;
                     }
                     // throw err;
-                    console.log(`>>>>>>>>>>> ${err.response.status} CrossRef failed:`, err);
+                    console.log(`>>>>>>>>>>> ${err.response?.status} CrossRef failed:`, err);
                     nextSleep = 1000 * 60;
+                    if (!err.response) {
+                        throw new Error('throwing because no response...');
+                    }
                     return undefined;
                 }
                 // console.log(crData);
@@ -219,6 +240,7 @@ const fetchDblp = async () => {
 
             for (const [dblpData, crData] of crDataAll) {
                 // if (enabled === false) return undefined;
+                console.log(new Date(), '|', batchNumNow, '|', dblpData.doi, '|', dblpData.title);
 
                 const crAuthorList = (crData.author || [])
                     .filter((author: any) => author.given != undefined && author.family != undefined)
@@ -240,10 +262,18 @@ const fetchDblp = async () => {
 
                 mergeAuthorData(crAuthorList, dblpAuthorList);
 
+                crAuthorList.forEach((author: any) => { // Add sourceIds to the CR authors that didn't have a matching DBLP author
+                    if (author.sourceId === undefined) {
+                        author.sourceId = `CR/${author.fullName}`;
+                    }
+                });
+
                 const crVenueList = (crData['container-title'] || [])
                     .map((venue: string) => parseVenueName(venue));
 
-                const dblpVenue = parseVenueName(dblpData.venue);
+                const dblpVenueList = (Array.isArray(dblpData.venue) ? dblpData.venue : [dblpData.venue])
+                    .filter((venue: any) => venue != null)
+                    .map((venue: string) => parseVenueName(venue));
 
                 const crDataUse: any = {
                     source: 'crossref',
@@ -260,7 +290,7 @@ const fetchDblp = async () => {
                             .map((author: any) => (
                                 {
                                     create: author,
-                                    where: { fullName: author.fullName },
+                                    where: { sourceId: author.sourceId },
                                 }
                             )),
                     },
@@ -287,14 +317,14 @@ const fetchDblp = async () => {
                             .map((author: any) => (
                                 {
                                     create: author,
-                                    where: { fullName: author.fullName },
+                                    where: { sourceId: author.sourceId },
                                 }
                             )),
                     },
-                    venue: dblpVenue ? {
+                    venue: dblpVenueList.length ? {
                         connectOrCreate: {
-                            create: { title: dblpVenue, type: parseVenueTypeFromField(dblpData.key, 'dblp') },
-                            where: { title: dblpVenue },
+                            create: { title: dblpVenueList[0], type: parseVenueTypeFromField(dblpData.key, 'dblp') },
+                            where: { title: dblpVenueList[0] },
                         },
                     } : undefined,
                 };
@@ -320,9 +350,6 @@ const fetchDblp = async () => {
                 //     },
                 // };
 
-                console.log(new Date(), '|', batchNumNow, '|', crDataUse.doi, '|', crDataUse.title);
-                // console.dir(crData, { depth: 1 });
-
                 // console.dir({
                 //     nowStamp: new Date(),
                 //     batch: batchNumNow,
@@ -333,9 +360,7 @@ const fetchDblp = async () => {
                 //     connectOrCreateVenue: venueConnectCr,
                 // }, { depth: Infinity });
 
-                // console.dir({
-                //     data: crDataUse,
-                // }, { depth: Infinity });
+                // console.dir({ data: mergedDataUse }, { depth: Infinity });
 
                 // const crPubl = await prisma.publication.create({
                 //     data: crDataUse,
@@ -368,16 +393,26 @@ const fetchDblp = async () => {
                 }) || {});
 
                 if (publRootId) {
-                    console.log(`Updating publication_root ${publRootId} to include newly created publications`);
-                    numUpdated++;
-                    // await prisma.publicationRoot.update({
-                    //     where: { id: publRootId },
-                    //     data: {
-                    //         publications: createPublications, // Make sure it isn't overriding the existing ones
-                    //     },
-                    // });
+                    const { id: publId } = (await prisma.publication.findFirst({
+                        where: {
+                            publicationRootId: publRootId,
+                            source: 'dblp',
+                        },
+                    }) || {});
+                    if (!publId) {
+                        console.log(`(U) Updating publication_root ${publRootId} to include newly created publications`);
+                        numUpdated++;
+                        // await prisma.publicationRoot.update({
+                        //     where: { id: publRootId },
+                        //     data: {
+                        //         publications: createPublications, // Make sure it isn't overriding the existing ones
+                        //     },
+                        // });
+                    } else {
+                        console.log(`(X) Publication (${publId}) already exists under publication_root ${publRootId}, skipping...`);
+                    }
                 } else {
-                    console.log('Creating new publication_root and publications');
+                    console.log('(C) Creating new publication_root and publications');
                     numCreated++;
                     await prisma.publicationRoot.create({
                         data: {

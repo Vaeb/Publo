@@ -43,6 +43,7 @@ export default {
                         OR: [
                             { title: { contains: text, mode: 'insensitive' } },
                         ],
+                        source: 'merged',
                     },
                     include: { authors: true, venue: true },
                     take: limit,
