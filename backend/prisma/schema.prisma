@@ -30,6 +30,8 @@ model Publication {
     year              Int
     stampCreated      DateTime?
     volume            String?
+    number            String?
+    pages             String?
     pdfUrl            String?
     pageUrl           String?
     authors           Author[]
@@ -38,6 +40,8 @@ model Publication {
     createdAt         DateTime         @default(now())
     updatedAt         DateTime         @updatedAt
 
+    @@unique([source, title])
+    @@unique([source, doi])
     @@map("publications")
 }
 
@@ -46,6 +50,7 @@ model Author {
     firstName    String
     lastName     String
     fullName     String        @id
+    sourceId     String?       @unique
     orcid        String?
     dob          String?
     publications Publication[]

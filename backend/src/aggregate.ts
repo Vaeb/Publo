@@ -41,6 +41,79 @@ console.log('Aggregating publications...');
 //     pdfUrl?: string
 // }
 
+const parseVenueTypeFromField = (fieldVal: string, source: string) => {
+    let venueType = 'Unknown';
+    fieldVal = fieldVal.toLowerCase();
+
+    if (source === 'crossref') {
+        if (fieldVal.startsWith('journal')) {
+            venueType = 'Journal';
+        } else if (fieldVal.startsWith('proceedings')) {
+            venueType = 'Conference';
+        }
+    } else if (source === 'dblp') {
+        if (fieldVal.startsWith('journal')) {
+            venueType = 'Journal';
+        } else if (fieldVal.startsWith('conf')) {
+            venueType = 'Conference';
+        }
+    }
+
+    return venueType;
+};
+
+const parsePublicationType = (value: string) => {
+    let newValue = 'Unknown';
+    value = value.toLowerCase();
+
+    if (/journal\W*article/.test(value)) {
+        newValue = 'Journal Article';
+    } else if (/\b(?:proceedings|conference)\b/.test(value)) {
+        newValue = 'Proceedings Article';
+    }
+
+    return newValue;
+};
+
+const parseAuthorName = (name?: string) => (name == null ? undefined : name.replace(/[^a-z\- .,']+/ig, ''));
+
+const parseVenueName = (name?: string) => (name == null ? undefined : name.replace(/^\W+|\W+$/ig, ''));
+
+const mergeAuthorData = (authors1: any, authors2: any) => {
+    const authorKeys = [...new Set([...Object.keys(authors1[0] || []), ...Object.keys(authors2[0] || [])])];
+    const authors2Obj = Object.assign({}, ...authors2.map((author2: any) => ({ [author2.fullName]: author2 })));
+
+    for (const author1 of authors1) {
+        const author2 = authors2Obj[author1.fullName];
+        if (author2) {
+            for (const key of authorKeys) {
+                if (author1[key] === undefined) {
+                    author1[key] = author2[key];
+                } else if (author2[key] === undefined) {
+                    author2[key] = author1[key];
+                }
+            }
+        }
+    }
+};
+
+const getMergedPublData = (publ1: any, publ2: any) => {
+    const mergedData: any = {};
+    const publKeys = [...new Set([...Object.keys(publ1), ...Object.keys(publ2)])];
+
+    for (const key of publKeys) {
+        if (publ1[key]) {
+            mergedData[key] = publ1[key];
+        } else if (publ2[key]) {
+            mergedData[key] = publ2[key];
+        }
+    }
+
+    mergedData.source = 'merged';
+
+    return mergedData;
+};
+
 const fetchDblp = async () => {
     let enabled = true;
 
@@ -91,10 +164,10 @@ const fetchDblp = async () => {
             let results = data.result.hits.hit;
 
             results = (results || [])
-                .filter(({ info: sourceResult }: any) => sourceResult.doi != undefined)
-                .map(({ info: sourceResult }: any) => {
-                    sourceResult.doi = sourceResult.doi.toLowerCase();
-                    return sourceResult;
+                .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
+                .map(({ info: dblpData }: any) => {
+                    dblpData.doi = dblpData.doi.toUpperCase();
+                    return dblpData;
                 });
 
             if (results.length === 0) {
@@ -118,13 +191,13 @@ const fetchDblp = async () => {
             }
 
             // eslint-disable-next-line @typescript-eslint/no-loop-func
-            const crDataAll: any = (await Promise.all(results.map(async (sourceResult: any) => {
-                // console.log('fetching', `${crossRefWorksUrl}${sourceResult.doi}`);
+            const crDataAll: any = (await Promise.all(results.map(async (dblpData: any) => {
+                // console.log('fetching', `${crossRefWorksUrl}${dblpData.doi}`);
 
                 let crData: any;
 
                 try {
-                    const { data: crResult }: any = await axios.get(`${crossRefWorksUrl}${sourceResult.doi}`);
+                    const { data: crResult }: any = await axios.get(`${crossRefWorksUrl}${dblpData.doi}`);
                     crData = crResult.message;
                 } catch (err) {
                     if (err.response && err.response.status === 404) {
@@ -138,138 +211,223 @@ const fetchDblp = async () => {
                 }
                 // console.log(crData);
 
-                return [sourceResult, crData];
+                return [dblpData, crData];
             }))).filter((crData: any) => crData != undefined);
 
-            const resultQueries = crDataAll.map(([sourceResult, crData]: any) => {
+            let numCreated = 0;
+            let numUpdated = 0;
+
+            for (const [dblpData, crData] of crDataAll) {
                 // if (enabled === false) return undefined;
 
-                let venueType = 'Unknown';
-                if (crData.type.startsWith('journal')) {
-                    venueType = 'Journal';
-                } else if (crData.type.startsWith('proceedings')) {
-                    venueType = 'Conference';
-                }
-
-                const publRootId = await prisma.publicationRoot.findFirst({
-                    where: {
-                        OR: [
-                            { doi: sourceResult.doi },
-                        ],
-                    },
-                });
-
-                const publTitle = crData.title[0];
-                const publDoi = crData.DOI.toLowerCase();
-                const publType = crData.type;
-                const publYear = crData.created['date-parts'][0][0];
-                const publStampCreated = new Date(crData.created.timestamp);
-                const publVolume = crData.volume;
-                const publPdfUrl = crData.link?.[0]?.URL;
-                const publPageUrl = crData.URL;
-                let authorList = (crData.author || []);
-                const venueList = crData['container-title'];
-                const venueTitle = venueList?.[0];
-                const venueIssn = crData.ISSN?.[0];
-
-                authorList = authorList
+                const crAuthorList = (crData.author || [])
                     .filter((author: any) => author.given != undefined && author.family != undefined)
                     .map((author: any) => {
-                        author.given = author.given.replace(/[^a-z\- .,']+/ig, '');
-                        author.family = author.family.replace(/[^a-z\- .,']+/ig, '');
-                        return author;
+                        const firstName = parseAuthorName(author.given);
+                        const lastName = parseAuthorName(author.family);
+                        return { firstName, lastName, fullName: `${firstName} ${lastName}`, orcid: author.ORCID };
                     });
 
-                if (!publTitle || !publDoi || !authorList.length) {
-                    let missing = '';
-                    if (!publTitle) {
-                        missing = 'title';
-                    } else if (!publDoi) {
-                        missing = 'doi';
-                    } else if (!authorList.length) {
-                        missing = 'author';
-                    }
-                    console.log(`Missing ${missing} (CrossRef), skipping...`);
-                    return undefined;
-                }
+                let dblpAuthorList = (dblpData.authors?.author || []);
+                dblpAuthorList = (Array.isArray(dblpAuthorList) ? dblpAuthorList : [dblpAuthorList])
+                    .map((author: any) => {
+                        const fullName = parseAuthorName(author.text);
+                        if (!fullName) return undefined;
+                        const nameParts = fullName.split(' ');
+                        return { firstName: nameParts[0], lastName: nameParts.slice(1).join(' '), fullName, sourceId: author['@pid'] };
+                    })
+                    .filter((author: any) => author.firstName && author.lastName && author.fullName);
 
-                const authorConnects = authorList
-                    .map((author: any) => (
-                        {
-                            create: { firstName: author.given, lastName: author.family, fullName: `${author.given} ${author.family}`, orcid: author.ORCID },
-                            where: { fullName: `${author.given} ${author.family}` },
-                        }
-                    ));
+                mergeAuthorData(crAuthorList, dblpAuthorList);
 
-                const venueConnect = venueTitle !== undefined ? {
-                    connectOrCreate: {
-                        create: { title: venueTitle, type: venueType, issn: venueIssn },
-                        where: { title: venueTitle },
+                const crVenueList = (crData['container-title'] || [])
+                    .map((venue: string) => parseVenueName(venue));
+
+                const dblpVenue = parseVenueName(dblpData.venue);
+
+                const crDataUse: any = {
+                    source: 'crossref',
+                    title: crData.title[0],
+                    doi: crData.DOI.toUpperCase(),
+                    type: parsePublicationType(crData.type),
+                    year: crData.created['date-parts'][0][0],
+                    stampCreated: new Date(crData.created.timestamp),
+                    volume: crData.volume,
+                    pdfUrl: crData.link?.[0]?.URL,
+                    pageUrl: crData.URL,
+                    authors: {
+                        connectOrCreate: crAuthorList
+                            .map((author: any) => (
+                                {
+                                    create: author,
+                                    where: { fullName: author.fullName },
+                                }
+                            )),
                     },
-                } : undefined;
-
-                const publicationRootConnect = {
-                    connect: {
-                        id: publRootId,
-                    },
+                    venue: crVenueList.length ? {
+                        connectOrCreate: {
+                            create: { title: crVenueList[0], type: parseVenueTypeFromField(crData.type, 'crossref'), issn: crData.ISSN?.[0] },
+                            where: { title: crVenueList[0] },
+                        },
+                    } : undefined,
                 };
 
-                console.log(new Date(), '|', batchNumNow, '|', publDoi, '|', publTitle);
+                const dblpDataUse: any = {
+                    source: 'dblp',
+                    title: dblpData.title,
+                    doi: dblpData.doi,
+                    type: parsePublicationType(dblpData.type),
+                    year: Number(dblpData.year),
+                    volume: dblpData.volume,
+                    number: dblpData.number,
+                    pages: dblpData.pages,
+                    pageUrl: dblpData.ee,
+                    authors: {
+                        connectOrCreate: dblpAuthorList
+                            .map((author: any) => (
+                                {
+                                    create: author,
+                                    where: { fullName: author.fullName },
+                                }
+                            )),
+                    },
+                    venue: dblpVenue ? {
+                        connectOrCreate: {
+                            create: { title: dblpVenue, type: parseVenueTypeFromField(dblpData.key, 'dblp') },
+                            where: { title: dblpVenue },
+                        },
+                    } : undefined,
+                };
+
+                let meetsRequired = true;
+                const requiredFields = ['title', 'doi', 'type', 'year'];
+
+                for (const field of requiredFields) {
+                    if (!crDataUse[field] || !dblpDataUse[field]) {
+                        console.log(`Missing ${field} (${!crDataUse[field] ? 'CrossRef' : 'DBLP'}), skipping...`);
+                        meetsRequired = false;
+                        break;
+                    }
+                }
+
+                if (!meetsRequired) continue;
+
+                const mergedDataUse = getMergedPublData(dblpDataUse, crDataUse);
+
+                // const publicationRootConnect = {
+                //     connect: {
+                //         id: publRootId,
+                //     },
+                // };
+
+                console.log(new Date(), '|', batchNumNow, '|', crDataUse.doi, '|', crDataUse.title);
                 // console.dir(crData, { depth: 1 });
 
                 // console.dir({
                 //     nowStamp: new Date(),
                 //     batch: batchNumNow,
                 //     idx,
-                //     doi: publDoi,
-                //     publicationTitle: crData.title.length > 1 ? crData.title : publTitle,
-                //     connectOrCreateAuthor: authorConnects,
-                //     connectOrCreateVenue: venueConnect,
+                //     doi: publDoiCr,
+                //     publicationTitle: crData.title.length > 1 ? crData.title : publTitleCr,
+                //     connectOrCreateAuthor: authorConnectsCr,
+                //     connectOrCreateVenue: venueConnectCr,
                 // }, { depth: Infinity });
 
-                return [
-                    prisma.publication.create({
-                        data: {
-                            publicationRoot: publicationRootConnect,
-                            source: 'crossref',
-                            title: publTitle,
-                            doi: publDoi,
-                            type: publType,
-                            year: publYear,
-                            stampCreated: publStampCreated,
-                            volume: publVolume,
-                            pdfUrl: publPdfUrl,
-                            pageUrl: publPageUrl,
-                            authors: {
-                                connectOrCreate: authorConnects,
-                            },
-                            venue: venueConnect,
-                        },
-                    }),
-                    prisma.publication.create({
-                        data: {
-                            publicationRoot: publicationRootConnect,
-                            source: 'crossref',
-                            title: publTitle,
-                            doi: publDoi,
-                            type: publType,
-                            year: publYear,
-                            stampCreated: publStampCreated,
-                            volume: publVolume,
-                            pdfUrl: publPdfUrl,
-                            pageUrl: publPageUrl,
-                            authors: {
-                                connectOrCreate: authorConnects,
-                            },
-                            venue: venueConnect,
-                        },
-                    }),
-                ];
-            }).filter((query: any) => query != undefined);
+                // console.dir({
+                //     data: crDataUse,
+                // }, { depth: Infinity });
 
-            await prisma.$transaction(resultQueries);
+                // const crPubl = await prisma.publication.create({
+                //     data: crDataUse,
+                // });
+                // console.log(crPubl);
 
-            console.log(`Done, ran ${resultQueries.length} queries`);
+                // const dblpPubl = await prisma.publication.create({
+                //     data: dblpDataUse,
+                // });
+                // console.log(dblpPubl);
+
+                // return;
+
+                const createPublications = {
+                    create: [
+                        mergedDataUse,
+                        crDataUse,
+                        dblpDataUse,
+                    ],
+                };
+
+                const { id: publRootId } = (await prisma.publicationRoot.findFirst({
+                    where: {
+                        OR: [
+                            { doi: crDataUse.doi },
+                            { title: dblpData.title },
+                            { title: crDataUse.title },
+                        ],
+                    },
+                }) || {});
+
+                if (publRootId) {
+                    console.log(`Updating publication_root ${publRootId} to include newly created publications`);
+                    numUpdated++;
+                    // await prisma.publicationRoot.update({
+                    //     where: { id: publRootId },
+                    //     data: {
+                    //         publications: createPublications, // Make sure it isn't overriding the existing ones
+                    //     },
+                    // });
+                } else {
+                    console.log('Creating new publication_root and publications');
+                    numCreated++;
+                    await prisma.publicationRoot.create({
+                        data: {
+                            doi: crDataUse.doi,
+                            title: crDataUse.title,
+                            publications: createPublications,
+                        },
+                    });
+                }
+
+                // await prisma.publication.create({
+                //     data: {
+                //         publicationRoot: publicationRootConnect,
+                //         source: 'crossref',
+                //         title: publTitleCr,
+                //         doi: publDoiCr,
+                //         type: publTypeCr,
+                //         year: publYearCr,
+                //         stampCreated: publStampCreatedCr,
+                //         volume: publVolumeCr,
+                //         pdfUrl: publPdfUrlCr,
+                //         pageUrl: publPageUrlCr,
+                //         authors: {
+                //             connectOrCreate: authorConnectsCr,
+                //         },
+                //         venue: venueConnectCr,
+                //     },
+                // });
+                // await prisma.publication.create({
+                //     data: {
+                //         publicationRoot: publicationRootConnect,
+                //         source: 'crossref',
+                //         title: publTitleCr,
+                //         doi: publDoiCr,
+                //         type: publTypeCr,
+                //         year: publYearCr,
+                //         stampCreated: publStampCreatedCr,
+                //         volume: publVolumeCr,
+                //         pdfUrl: publPdfUrlCr,
+                //         pageUrl: publPageUrlCr,
+                //         authors: {
+                //             connectOrCreate: authorConnectsCr,
+                //         },
+                //         venue: venueConnectCr,
+                //     },
+                // });
+            }
+
+            console.log(`Done, ran ${numCreated + numUpdated} queries (${numCreated} created; ${numUpdated} updated)`);
+            return;
         } catch (err) {
             enabled = false;
             console.log('[Aggregation failed]:');
