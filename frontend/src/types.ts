@@ -11,6 +11,7 @@ export interface GenericResult {
 
 export interface Publication {
     id: string
+    source: string
     resultType?: string
     title: string
     doi: string

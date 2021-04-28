@@ -112,6 +112,28 @@ const checkArrIdentical = (key: string, ...arrs: any[][]) => {
     return true;
 };
 
+const getStructuredData = (publications: Publication[], key: string) => {
+    const structuredData = [];
+    let hasChanged = true;
+    let idx = 0;
+    while (hasChanged) {
+        hasChanged = false;
+        const entry = [];
+        for (const publ of publications) {
+            if (structuredData.length === 0) {
+                entry.push(publ.source);
+                hasChanged = true;
+            } else if ((publ as any)[key][idx]) {
+                hasChanged = true;
+                entry.push((publ as any)[key][idx].fullName);
+            }
+        }
+        if (entry.length) structuredData.push(entry);
+        if (structuredData.length > 1) idx++;
+    }
+    return structuredData;
+};
+
 const PublicationPage = ({ id }: any): ReactElement | null => {
     const { loading, error, data } = useQuery(getPublications, {
         variables: { id: Number(id) },
@@ -158,8 +180,8 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
         }
     });
 
-    const authorsIsDiff = !checkArrIdentical('id', ...publicationAuthors.filter((authors: any) => authors.length));
-    console.log('authorsIsDiff', authorsIsDiff, publicationAuthors);
+    const isAuthorDiff = !checkArrIdentical('id', ...publicationAuthors.filter((authors: any) => authors.length));
+    console.log('isAuthorDiff', isAuthorDiff, publicationAuthors);
 
     const foundPublFromAuthors: any = {};
     const foundPublFromVenues: any = {};
@@ -183,6 +205,9 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
         });
 
     const publDate = mergedPubl.stampCreated ? String(new Date(Number(mergedPubl.stampCreated))).replace(/ GMT.+$/, '') : null;
+
+    const structuredAuthors = getStructuredData(publications.filter(publ => publ.source !== 'merged'), 'authors');
+    console.log('structuredAuthors', structuredAuthors);
 
     return (
         <div>
@@ -221,18 +246,63 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                         <Heading mt="0" size="lg" color="#1c1d1e">
                             {mergedPubl.title}
                         </Heading>
-                        <Box>
-                            {mergedPubl.authors.map((author: any, i: number) => (
-                                <span key={i}>
-                                    {i > 0 && <span> • </span>}
-                                    <Text display="inline" _hover={{ textDecoration: 'underline' }}>
-                                        <NextLink href={'/author/[id]'} as={`/author/${author.id}`}>
-                                            {`${author.fullName}`}
-                                        </NextLink>
-                                    </Text>
-                                </span>
-                            ))}
-                        </Box>
+                        <Popover trigger="hover">
+                            <PopoverTrigger>
+                                <Box className={isAuthorDiff ? 'diff-indicator' : undefined}>
+                                    {mergedPubl.authors.map((author: any, i: number) => (
+                                        <span key={i}>
+                                            {i > 0 && <span> • </span>}
+                                            <Text
+                                                display="inline"
+                                                _hover={{
+                                                    textDecoration: 'underline',
+                                                    textDecorationColor: isAuthorDiff ? 'blue' : 'black',
+                                                }}
+                                                className={isAuthorDiff ? 'diff-indicator' : undefined}
+                                            >
+                                                <NextLink href={'/author/[id]'} as={`/author/${author.id}`}>
+                                                    {`${author.fullName}`}
+                                                </NextLink>
+                                            </Text>
+                                        </span>
+                                    ))}
+                                </Box>
+                            </PopoverTrigger>
+                            {isAuthorDiff ? (
+                                <PopoverContent>
+                                    <PopoverArrow />
+                                    <PopoverBody fontSize="15px">
+                                        <Box fontWeight="bold">Identified inconsistencies with author data:</Box>
+                                        <Box display="flex">{
+                                            // publications
+                                            //     .filter(publ => publ.source !== 'merged')
+                                            //     .map((publ, i) => (
+                                            //         <Box key={i}>
+                                            //             <Text display="inline-block" width="70px" fontWeight="bold">{publ.source}: </Text>
+                                            //             <Text display="inline">{publ.authors.map(author => author.fullName).join(' • ')}</Text>
+                                            //         </Box>
+                                            //     ))
+                                            structuredAuthors
+                                                .map((authorGroup, i) => ([
+                                                    i >= 2 ? (
+                                                        <Box key={`${i}-dot-box`} display="flex" flexDir="column" mr={'4px'}>{
+                                                            authorGroup.map((_, j) => (
+                                                                <Text key={`${i}-dot-${j}`} display="inline">•</Text>
+                                                            ))
+                                                        }</Box>
+                                                    ) : undefined,
+                                                    <Box key={`${i}-author-box`} display="flex" flexDir="column" mr={i === 0 ? '10px' : '4px'}>{
+                                                        authorGroup.map((author, j) => (
+                                                            <Text fontWeight={i === 0 ? 'bold' : 'normal'} key={`${i}-author-${j}`} display="inline">{author}</Text>
+                                                        ))
+                                                    }
+                                                    </Box>,
+                                                ])).flat(1)
+                                        }</Box>
+                                    </PopoverBody>
+                                </PopoverContent>
+                            ) : null}
+                        </Popover>
                         <Box fontSize="13px" opacity={0.9} p="5px 0">
                             <span className="interactive" onClick={() => copyText('doi-link')}>
                                 DOI:{' '}
@@ -257,7 +327,7 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
             <Box mt="40px" d="flex">
                 <Box width="50%">
                     <Text ml="15px" fontSize={20}>
-                        Other publications from this venue:
+                        Other publications from this {mergedPubl.venue?.type?.toLowerCase() || 'venue'}:
                     </Text>
                     <Box maxH="630px" overflowY="auto">
                         <List results={genericPublicationsFromVenue} resultTypeAll="publication" />

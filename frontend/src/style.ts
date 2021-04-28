@@ -100,4 +100,10 @@ export default createGlobalStyle`
     .interactive {
         cursor: pointer;
     }
+
+    .diff-indicator {
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-decoration-color: blue;
+    }
 `;
