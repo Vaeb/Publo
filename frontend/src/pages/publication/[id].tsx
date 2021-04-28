@@ -90,6 +90,7 @@ const blankAuthor: Author = {
 
 const blankPublication: Publication = {
     id: '-1',
+    source: 'merged',
     title: 'Loading...',
     doi: 'Loading...',
     type: 'Loading...',
