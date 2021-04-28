@@ -45,9 +45,11 @@ const getPublications = gql`
                     title
                     year
                     authors {
+                        id
                         fullName
                     }
                     venue {
+                        id
                         title
                     }
                 }
@@ -61,9 +63,11 @@ const getPublications = gql`
                     title
                     year
                     authors {
+                        id
                         fullName
                     }
                     venue {
+                        id
                         title
                     }
                 }
