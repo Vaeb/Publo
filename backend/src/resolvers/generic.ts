@@ -79,7 +79,7 @@ export default {
                         source: 'merged',
                     },
                     include: { authors: true, venue: true },
-                    take: 30000,
+                    take: 100000,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
@@ -90,7 +90,7 @@ export default {
                     where: {
                         fullName: { contains: text, mode: 'insensitive' },
                     },
-                    take: 30000,
+                    take: 100000,
                 });
 
                 addToGeneric(genResults, results, 'author');
@@ -101,7 +101,7 @@ export default {
                     where: {
                         title: { contains: text, mode: 'insensitive' },
                     },
-                    take: 30000,
+                    take: 100000,
                 });
 
                 addToGeneric(genResults, results, 'venue');
