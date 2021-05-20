@@ -5,8 +5,8 @@ import { Context, GenericResult, ResultType } from '../types';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '');
 
-const calcResultStrength = (searchText: string, result: GenericResult): number[] => { // Includes term, Offset from start, % filled, % matching caps
-    const strength = new Array(4).fill(0);
+const calcResultStrength = (searchText: string, result: GenericResult): number => { // Includes term, Offset from start, % filled, % matching caps
+    let strength = 0; // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
 
     searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
@@ -14,23 +14,28 @@ const calcResultStrength = (searchText: string, result: GenericResult): number[]
     const resultTextLower = resultText.toLowerCase();
     const matchPos = resultTextLower.indexOf(searchTextLower);
 
-    if (matchPos >= 0) {
-        strength[0] = 1; // Result text includes search term
+    if (searchText === '') {
+        strength = (9e5 - resultText.length) / 9e5; // Assume result title/name will not be over 9e5 characters
+    } else if (matchPos >= 0) {
+        strength += 0.999 * 1e9; // Result text includes search term
 
-        const totalPosition = resultText.length - searchText.length;
-        const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
-        strength[1] = positionOff; // Offset from the start
+        const searchTextLen = searchText.length;
+        const resultTextLen = resultText.length;
 
-        const filledPerc = Math.min(searchText.length / resultText.length);
-        strength[2] = filledPerc; // Percentage of result text that search term fills
+        const totalPosition = resultTextLen - searchTextLen;
+        const positionOff = (totalPosition - matchPos) / totalPosition;
+        // const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
+        strength += Math.min(positionOff * 1e6, 0.999); // Offset from the start
 
-        const iterLen = Math.min(searchText.length, resultText.length);
+        const filledPerc = searchTextLen / resultTextLen;
+        strength += Math.min(filledPerc * 1e3, 0.999); // Percentage of result text that search term fills
+
         let numCaps = 0;
-        for (let i = 0; i < iterLen; i++) {
+        for (let i = 0; i < searchTextLen; i++) {
             if (searchText[i] === resultText[matchPos + i]) numCaps++;
         }
-        const capsPerc = Math.min(numCaps / iterLen, 0.999);
-        strength[3] = capsPerc; // Percentage of possible caps that match
+        const capsPerc = numCaps / searchTextLen;
+        strength += Math.min(capsPerc, 0.999); // Percentage of possible caps that match
     }
 
     return strength;
@@ -78,8 +83,14 @@ export default {
                         ],
                         source: 'merged',
                     },
-                    include: { authors: true, venue: true },
-                    take: 100000,
+                    select: {
+                        id: true,
+                        title: true,
+                        year: true,
+                        authors: { select: { fullName: true } },
+                        venue: { select: { title: true } },
+                    },
+                    take: 30000,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
@@ -90,7 +101,11 @@ export default {
                     where: {
                         fullName: { contains: text, mode: 'insensitive' },
                     },
-                    take: 100000,
+                    select: {
+                        id: true,
+                        fullName: true,
+                    },
+                    take: 30000,
                 });
 
                 addToGeneric(genResults, results, 'author');
@@ -101,7 +116,11 @@ export default {
                     where: {
                         title: { contains: text, mode: 'insensitive' },
                     },
-                    take: 100000,
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                    take: 30000,
                 });
 
                 addToGeneric(genResults, results, 'venue');
@@ -109,7 +128,7 @@ export default {
 
             console.log('Sorting results...');
 
-            const resultStrength: { [key: string]: number[] } = {};
+            const resultStrength: { [key: string]: number } = {};
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
                     let aStrength = resultStrength[a.id];
@@ -122,17 +141,7 @@ export default {
                         bStrength = calcResultStrength(text, b);
                         resultStrength[b.id] = bStrength;
                     }
-                    let bStronger = 0;
-                    for (let i = 0; i < aStrength.length; i++) {
-                        if (bStrength[i] > aStrength[i]) {
-                            bStronger = 1;
-                            break;
-                        } else if (bStrength[i] < aStrength[i]) {
-                            bStronger = -1;
-                            break;
-                        }
-                    }
-                    return bStronger;
+                    return bStrength - aStrength;
                 })
                 .slice(0, limit);
 
