@@ -107,6 +107,8 @@ export default {
                 addToGeneric(genResults, results, 'venue');
             }
 
+            console.log('Sorting results...');
+
             const resultStrength: { [key: string]: number[] } = {};
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
@@ -133,6 +135,8 @@ export default {
                     return bStronger;
                 })
                 .slice(0, limit);
+
+            console.log('Done, returning...');
 
             return genResults;
         },
