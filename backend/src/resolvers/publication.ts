@@ -34,15 +34,6 @@ export default {
 
             if (!publicationRoot?.publications) return undefined;
 
-            // let { publications } = (await prisma.publicationRoot.findUnique({
-            //     where: { id: rootId },
-            //     select: {
-            //         publications: {
-            //             include: { authors: true, venue: true },
-            //         },
-            //     },
-            // }) || {});
-
             let { publications } = publicationRoot;
             let mergedPubl = publications[0];
             publications = publications.filter((publ) => {
@@ -53,8 +44,6 @@ export default {
                 return true;
             });
             publications.unshift(mergedPubl);
-
-            // console.log(publications);
 
             return publications;
         },

@@ -57,7 +57,7 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     });
 
     const ref = useRef(_data);
-    if (!loading) ref.current = _data;
+    if (!loading) ref.current = _data; // Cache old search results while new results are loading
     const data = ref.current;
 
     console.log('Got data:', 'loading', loading, '_data', _data, 'data', data, 'error', error);

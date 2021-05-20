@@ -279,14 +279,6 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                                     <PopoverBody fontSize="15px">
                                         <Box fontWeight="bold">Identified inconsistencies with author data:</Box>
                                         <Box display="flex">{
-                                            // publications
-                                            //     .filter(publ => publ.source !== 'merged')
-                                            //     .map((publ, i) => (
-                                            //         <Box key={i}>
-                                            //             <Text display="inline-block" width="70px" fontWeight="bold">{publ.source}: </Text>
-                                            //             <Text display="inline">{publ.authors.map(author => author.fullName).join(' • ')}</Text>
-                                            //         </Box>
-                                            //     ))
                                             structuredAuthors
                                                 .map((authorGroup, i) => ([
                                                     i >= 2 ? (

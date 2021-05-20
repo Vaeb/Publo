@@ -82,9 +82,6 @@ const AuthorPage = ({ id }: any): ReactElement | null => {
                 <Flex justifyContent="center" />
             </Box>
             <Box>
-                {/* <Center h="50vh">
-                    <Text fontSize={20}>Related papers...</Text>
-                </Center> */}
                 <List results={genericPublications} resultTypeAll="publication" />
             </Box>
             <Box h="20px" />

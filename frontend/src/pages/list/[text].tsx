@@ -90,7 +90,6 @@ const List = ({ router, text, type: resultTypeAll }: any) => {
                             lineHeight={1.45}
                             onClick={e => onItemClick(e, res)}
                         >
-                            {/* <h3>{res.id}</h3> */}
                             <Box d="flex" alignItems="center">
                                 <Icon as={typeIcons[res.resultType]} w="17px" h="17px" mr="5px" />
                                 <Text fontWeight="bold" fontSize="16px" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">

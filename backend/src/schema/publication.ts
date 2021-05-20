@@ -1,3 +1,9 @@
+/*
+
+    - GraphQL API schema for Publications only (see other schema files for authors, venues, etc.)
+
+*/
+
 export default `
     type Publication {
         id: ID!

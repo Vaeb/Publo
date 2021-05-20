@@ -29,13 +29,12 @@ interface ListParams {
     resultTypeAll: ResultType
 }
 
-export const List = ({ results, resultTypeAll }: ListParams): ReactElement => {
+export const List = ({ results }: ListParams): ReactElement => {
     const router = useRouter();
 
     const onItemClick = (e: any, res: GenericResult) => {
         if (window?.getSelection()?.toString()?.length) return;
         e.preventDefault();
-        console.log(`/${res.resultType}/[id]`, `/${res.resultType}/${res.id}`);
         router.push(`/${res.resultType}/[id]`, `/${res.resultType}/${res.id}`);
     };
 
@@ -59,7 +58,6 @@ export const List = ({ results, resultTypeAll }: ListParams): ReactElement => {
                             lineHeight={1.45}
                             onClick={e => onItemClick(e, res)}
                         >
-                            {/* <h3>{res.id}</h3> */}
                             <Box d="flex" alignItems="center">
                                 <Icon as={typeIcons[res.resultType]} w="17px" h="17px" mr="5px" />
                                 <Text fontWeight="bold" fontSize="16px" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">

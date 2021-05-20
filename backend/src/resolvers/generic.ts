@@ -3,6 +3,39 @@
 import { Context, GenericResult, ResultType } from '../types';
 // import formatErrors from '../utils/formatErrors';
 
+const normalizeResultText = (str: string) => str.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '');
+
+const calcResultStrength = (searchText: string, result: GenericResult): number[] => {
+    const strength = new Array(4).fill(0);
+
+    searchText = normalizeResultText(searchText);
+    const searchTextLower = searchText.toLowerCase();
+    const resultText = normalizeResultText(result.text);
+    const resultTextLower = resultText.toLowerCase();
+    const matchPos = resultTextLower.indexOf(searchTextLower);
+
+    if (matchPos >= 0) {
+        strength[0] = 1; // Result text includes search term
+
+        const filledPerc = Math.min(searchText.length / resultText.length);
+        strength[1] = filledPerc; // Percentage of result text that search term fills
+
+        const iterLen = Math.min(searchText.length, resultText.length);
+        let numCaps = 0;
+        for (let i = 0; i < iterLen; i++) {
+            if (searchText[i] === resultText[matchPos + i]) numCaps++;
+        }
+        const capsPerc = Math.min(numCaps / iterLen, 0.999);
+        strength[2] = capsPerc; // Amount of caps that match
+
+        const totalPosition = resultText.length - searchText.length;
+        const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
+        strength[3] = positionOff; // Offset from the start
+    }
+
+    return strength;
+};
+
 const propToText: any = {
     publication: 'title',
     author: 'fullName',
@@ -74,11 +107,30 @@ export default {
                 addToGeneric(genResults, results, 'venue');
             }
 
+            const resultStrength: { [key: string]: number[] } = {};
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
-                    const aIndex = a.text.indexOf(text);
-                    const bIndex = b.text.indexOf(text);
-                    return aIndex - bIndex;
+                    let aStrength = resultStrength[a.id];
+                    let bStrength = resultStrength[b.id];
+                    if (!aStrength) {
+                        aStrength = calcResultStrength(text, a);
+                        resultStrength[a.id] = aStrength;
+                    }
+                    if (!bStrength) {
+                        bStrength = calcResultStrength(text, b);
+                        resultStrength[b.id] = bStrength;
+                    }
+                    let bStronger = 0;
+                    for (let i = 0; i < aStrength.length; i++) {
+                        if (bStrength[i] > aStrength[i]) {
+                            bStronger = 1;
+                            break;
+                        } else if (bStrength[i] < aStrength[i]) {
+                            bStronger = -1;
+                            break;
+                        }
+                    }
+                    return bStronger;
                 })
                 .slice(0, limit);
 

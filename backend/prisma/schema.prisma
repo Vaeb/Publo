@@ -13,7 +13,7 @@ generator client {
 model PublicationRoot {
     id           Int           @id @default(autoincrement())
     title        String        @unique
-    doi          String        @unique
+    doi          String?       @unique
     publications Publication[]
 
     @@map("publication_roots")
@@ -25,7 +25,7 @@ model Publication {
     publicationRootId Int?
     source            String
     title             String
-    doi               String
+    doi               String?
     type              String
     year              Int
     stampCreated      DateTime?

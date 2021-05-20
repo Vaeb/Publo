@@ -1,13 +1,15 @@
 /* eslint-disable no-await-in-loop */
+/* eslint-disable @typescript-eslint/no-loop-func */
 
 import axios from 'axios';
 
+import { Author, Publication } from '.prisma/client';
 import { prisma } from './server';
 
 // const resetDatabase = true;
 
 const dblpUrl = 'https://dblp.org/search/publ/api';
-const crossRefWorksUrl = 'https://api.crossref.org/works/';
+const crossRefWorksUrl = 'https://api.crossref.org/works';
 
 /*
     dblp
@@ -40,6 +42,8 @@ console.log('Aggregating publications...');
 //     venue?: string
 //     pdfUrl?: string
 // }
+
+const cleanStringField = (str: string) => str.replace(/^\W+|\W+$/g, '');
 
 const parseVenueTypeFromField = (fieldVal: string, source: string) => {
     let venueType = 'Unknown';
@@ -75,7 +79,9 @@ const parsePublicationType = (value: string) => {
     return newValue;
 };
 
-// normalize decomposes accents into separate character, then the regex removes the character (as well as other bad stuff in the string)
+const simplifyForComparison = (str: string) => str.replace(/^\W+|\W+$|[^\w\s]+/g, '').replace(/\s+/g, ' ').toLowerCase();
+
+// normalize decomposes accents into separate character, then the regex removes the character for smart comparison
 const parseAuthorName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, ''));
 
 const parseVenueName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, ''));
@@ -91,45 +97,91 @@ const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
     return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
 };
 
-const crPriority = {
-    firstName: true,
-    lastName: true,
-    fullName: true,
-};
+const mergeAuthorData = (authorSources: Author[][]) => {
+    const authorKeys = [...new Set([...authorSources.map(authorsSource => Object.keys(authorsSource[0] || [])).flat(1)])] as (keyof Author)[];
 
-const mergeAuthorData = (authors1: any, authors2: any) => {
-    const authorKeys = [...new Set([...Object.keys(authors1[0] || []), ...Object.keys(authors2[0] || [])])];
-    const authors2Obj = Object.assign({}, ...authors2.map((author2: any) => ({ [getSimpleName(author2.fullName)]: author2 })));
-
-    for (const author1 of authors1) {
-        const author2 = authors2Obj[getSimpleName(author1.fullName)];
-        if (author2) {
-            for (const key of authorKeys) {
-                if (author1[key] === undefined) {
-                    author1[key] = author2[key];
-                } else if (author2[key] === undefined) {
-                    author2[key] = author1[key];
+    for (const authorSource1 of authorSources[0]) {
+        const authorMatcher = getSimpleName(authorSource1.fullName);
+        for (let i = 1; i < authorSources.length; i++) {
+            const authorSourceNextObj = Object.assign({}, ...authorSources[i].map((author: any) => ({ [getSimpleName(author.fullName)]: author })));
+            const authorSourceNext = authorSourceNextObj[authorMatcher];
+            if (authorSourceNext) {
+                for (const key of authorKeys) {
+                    if (authorSource1[key]) {
+                        (authorSource1[key] as any) = authorSourceNext[key];
+                    } else if (authorSourceNext[key] === undefined) {
+                        authorSourceNext[key] = authorSource1[key];
+                    }
                 }
             }
         }
     }
 };
 
-const getMergedPublData = (publ1: any, publ2: any) => {
+const getMergedPublData = (publicationSources: Publication[]) => {
     const mergedData: any = {};
-    const publKeys = [...new Set([...Object.keys(publ1), ...Object.keys(publ2)])];
+    const publKeys = [...new Set([...publicationSources.map(publication => Object.keys(publication)).flat(1)])] as (keyof Publication)[];
 
     for (const key of publKeys) {
-        if (publ1[key]) {
-            mergedData[key] = publ1[key];
-        } else if (publ2[key]) {
-            mergedData[key] = publ2[key];
+        let bestValue;
+        for (const publication of publicationSources) {
+            const publValue = publication[key];
+            if (publValue != null) {
+                const valueType = typeof publValue;
+                if (bestValue === undefined) {
+                    bestValue = publValue;
+                } else if (valueType === 'string') { // Heuristically, longer text is more likely to imply detail
+                    bestValue = (publValue as string).length > (bestValue as string).length ? publValue : bestValue;
+                }
+
+                // Assume publicationSources are ordered by most reliable source first, hence if value is not a string then use the first real value
+                if (valueType !== 'string') break;
+            }
+        }
+        if (bestValue !== undefined) {
+            mergedData[key] = bestValue;
         }
     }
 
     mergedData.source = 'merged';
-
     return mergedData;
+};
+
+const levenshteinDistance = (str1: string, str2: string) => {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    const matrix: { [key: number]: { [key: number]: number } } = []; // len1+1, len2+1
+
+    if (len1 == 0) {
+        return len2;
+    } if (len2 == 0) {
+        return len1;
+    } if (str1 == str2) {
+        return 0;
+    }
+
+    for (let i = 0; i <= len1; i++) {
+        matrix[i] = {};
+        matrix[i][0] = i;
+    }
+
+    for (let j = 0; j <= len2; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= len1; i++) {
+        for (let j = 1; j <= len2; j++) {
+            let cost = 1;
+
+            if (str1[i - 1] == str2[j - 1]) {
+                cost = 0;
+            }
+
+            matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+        }
+    }
+
+    return matrix[len1][len2];
 };
 
 const fetchDblp = async () => {
@@ -182,9 +234,10 @@ const fetchDblp = async () => {
             let results = data.result.hits.hit;
 
             results = (results || [])
-                .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
+                // .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
                 .map(({ info: dblpData }: any) => {
-                    dblpData.doi = dblpData.doi.toUpperCase();
+                    dblpData.title = cleanStringField(dblpData.title);
+                    if (dblpData.doi) dblpData.doi = dblpData.doi.toUpperCase();
                     return dblpData;
                 });
 
@@ -198,7 +251,7 @@ const fetchDblp = async () => {
 
             const lastResultInDb = await prisma.publication.findFirst({
                 where: {
-                    doi: results[results.length - 1].doi,
+                    title: results[results.length - 1].title,
                     source: 'merged',
                 },
             });
@@ -208,29 +261,29 @@ const fetchDblp = async () => {
                 continue;
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-loop-func
-            const crDataAll: any = (await Promise.all(results.map(async (dblpData: any) => {
-                // console.log('fetching', `${crossRefWorksUrl}${dblpData.doi}`);
-
+            const crDataAll: any = (await Promise.all(results.map(async (dblpData: any) => { // Waits for all promises (running simultaneously) to finish executing
                 let crData: any;
 
                 try {
-                    const { data: crResult }: any = await axios.get(`${crossRefWorksUrl}${dblpData.doi}`);
-                    crData = crResult.message;
-                } catch (err) {
-                    if (err.response && err.response.status === 404) {
-                        console.log(`----------- ${err.response.status} CrossRef failed (suppressed):`, err);
-                        return undefined;
+                    if (dblpData.doi) {
+                        const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
+                        const { data: { message: crResultItem } } = crResult;
+                        crData = crResultItem;
+                    } else {
+                        const crResult = await axios.get(`${crossRefWorksUrl}?query=${dblpData.title}`); // Title has been cleaned/tidied prior
+                        const { data: { message: { items: [crResultItem] } } } = crResult;
+                        if (crResultItem != undefined && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title)) {
+                            crData = crResultItem;
+                        }
                     }
-                    // throw err;
-                    console.log(`>>>>>>>>>>> ${err.response?.status} CrossRef failed:`, err);
+                } catch (err) {
+                    console.log(`${err.response?.status} CrossRef request yielded no data:`, err);
                     nextSleep = 1000 * 60;
                     if (!err.response) {
-                        throw new Error('throwing because no response...');
+                        throw new Error('Something went wrong (no CrossRef HTTP response)...');
                     }
                     return undefined;
                 }
-                // console.log(crData);
 
                 return [dblpData, crData];
             }))).filter((crData: any) => crData != undefined);
@@ -260,7 +313,7 @@ const fetchDblp = async () => {
                     })
                     .filter((author: any) => author.firstName && author.lastName && author.fullName);
 
-                mergeAuthorData(crAuthorList, dblpAuthorList);
+                mergeAuthorData([crAuthorList, dblpAuthorList]);
 
                 crAuthorList.forEach((author: any) => { // Add sourceIds to the CR authors that didn't have a matching DBLP author
                     if (author.sourceId === undefined) {
@@ -277,7 +330,7 @@ const fetchDblp = async () => {
 
                 const crDataUse: any = {
                     source: 'crossref',
-                    title: crData.title[0],
+                    title: cleanStringField(crData.title[0]),
                     doi: crData.DOI.toUpperCase(),
                     type: parsePublicationType(crData.type),
                     year: crData.created['date-parts'][0][0],
@@ -342,7 +395,7 @@ const fetchDblp = async () => {
 
                 if (!meetsRequired) continue;
 
-                const mergedDataUse = getMergedPublData(dblpDataUse, crDataUse);
+                const mergedDataUse = getMergedPublData([dblpDataUse, crDataUse]);
 
                 // const publicationRootConnect = {
                 //     connect: {
@@ -396,18 +449,18 @@ const fetchDblp = async () => {
                     const { id: publId } = (await prisma.publication.findFirst({
                         where: {
                             publicationRootId: publRootId,
-                            source: 'dblp',
+                            source: 'merged',
                         },
                     }) || {});
                     if (!publId) {
                         console.log(`(U) Updating publication_root ${publRootId} to include newly created publications`);
                         numUpdated++;
-                        // await prisma.publicationRoot.update({
-                        //     where: { id: publRootId },
-                        //     data: {
-                        //         publications: createPublications, // Make sure it isn't overriding the existing ones
-                        //     },
-                        // });
+                        await prisma.publicationRoot.update({
+                            where: { id: publRootId },
+                            data: {
+                                publications: createPublications, // Make sure it isn't overriding the existing ones
+                            },
+                        });
                     } else {
                         console.log(`(X) Publication (${publId}) already exists under publication_root ${publRootId}, skipping...`);
                     }
