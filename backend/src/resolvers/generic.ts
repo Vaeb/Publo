@@ -5,7 +5,7 @@ import { Context, GenericResult, ResultType } from '../types';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '');
 
-const calcResultStrength = (searchText: string, result: GenericResult): number[] => {
+const calcResultStrength = (searchText: string, result: GenericResult): number[] => { // Includes term, Offset from start, % filled, % matching caps
     const strength = new Array(4).fill(0);
 
     searchText = normalizeResultText(searchText);
@@ -30,7 +30,7 @@ const calcResultStrength = (searchText: string, result: GenericResult): number[]
             if (searchText[i] === resultText[matchPos + i]) numCaps++;
         }
         const capsPerc = Math.min(numCaps / iterLen, 0.999);
-        strength[3] = capsPerc; // Amount of caps that match
+        strength[3] = capsPerc; // Percentage of possible caps that match
     }
 
     return strength;
@@ -79,7 +79,7 @@ export default {
                         source: 'merged',
                     },
                     include: { authors: true, venue: true },
-                    take: limit,
+                    take: 30000,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
@@ -90,7 +90,7 @@ export default {
                     where: {
                         fullName: { contains: text, mode: 'insensitive' },
                     },
-                    take: limit,
+                    take: 30000,
                 });
 
                 addToGeneric(genResults, results, 'author');
@@ -101,7 +101,7 @@ export default {
                     where: {
                         title: { contains: text, mode: 'insensitive' },
                     },
-                    take: limit,
+                    take: 30000,
                 });
 
                 addToGeneric(genResults, results, 'venue');
