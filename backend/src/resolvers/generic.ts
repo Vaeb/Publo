@@ -17,8 +17,12 @@ const calcResultStrength = (searchText: string, result: GenericResult): number[]
     if (matchPos >= 0) {
         strength[0] = 1; // Result text includes search term
 
+        const totalPosition = resultText.length - searchText.length;
+        const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
+        strength[1] = positionOff; // Offset from the start
+
         const filledPerc = Math.min(searchText.length / resultText.length);
-        strength[1] = filledPerc; // Percentage of result text that search term fills
+        strength[2] = filledPerc; // Percentage of result text that search term fills
 
         const iterLen = Math.min(searchText.length, resultText.length);
         let numCaps = 0;
@@ -26,11 +30,7 @@ const calcResultStrength = (searchText: string, result: GenericResult): number[]
             if (searchText[i] === resultText[matchPos + i]) numCaps++;
         }
         const capsPerc = Math.min(numCaps / iterLen, 0.999);
-        strength[2] = capsPerc; // Amount of caps that match
-
-        const totalPosition = resultText.length - searchText.length;
-        const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
-        strength[3] = positionOff; // Offset from the start
+        strength[3] = capsPerc; // Amount of caps that match
     }
 
     return strength;
