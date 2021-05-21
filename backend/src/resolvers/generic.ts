@@ -17,7 +17,8 @@ const calcResultStrength = (searchText: string, result: GenericResult): number =
     const matchPos = resultTextLower.indexOf(searchTextLower);
 
     if (searchText === '') {
-        strength = (9e5 - resultText.length) / 9e5; // Assume result title/name will not be over 9e5 characters
+        // strength = (9e5 - resultText.length) / 9e5; // Assume result title/name will not be over 9e5 characters
+        strength = 0;
     } else if (matchPos >= 0) {
         strength += 0.999 * 1e9; // Result text includes search term
 
@@ -83,52 +84,37 @@ export default {
             const takeNum = Math.max(limit, (fetchAny ? Math.floor(numFetch / 3) : numFetch));
 
             if (fetchAny || resultType === 'publication') {
-                const results = await prisma.publication.findMany({
-                    where: {
-                        OR: [
-                            { title: { contains: text, mode: 'insensitive' } },
-                        ],
-                        source: 'merged',
-                    },
-                    select: {
-                        id: true,
-                        title: true,
-                        year: true,
-                        authors: { select: { fullName: true } },
-                        venue: { select: { title: true } },
-                    },
-                    take: takeNum,
-                });
+                const results = await prisma.$queryRaw`
+                    SELECT p.id, p.title, p.year, a."fullName", v.title
+                    FROM publications p
+                    LEFT JOIN "_AuthorToPublication" ap
+                        ON ap."B" = p.id
+                    LEFT JOIN authors a
+                        ON ap."A" = a."sourceId"
+                    LEFT JOIN venues v
+                        ON p."venueId" = v.id
+                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                `;
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
             }
 
             if (fetchAny || resultType === 'author') {
-                const results = await prisma.author.findMany({
-                    where: {
-                        fullName: { contains: text, mode: 'insensitive' },
-                    },
-                    select: {
-                        id: true,
-                        fullName: true,
-                    },
-                    take: takeNum,
-                });
+                const results = await prisma.$queryRaw`
+                    SELECT a.id, a."fullName"
+                    FROM authors a
+                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                `;
 
                 addToGeneric(genResults, results, 'author');
             }
 
             if (fetchAny || resultType === 'venue') {
-                const results = await prisma.venue.findMany({
-                    where: {
-                        title: { contains: text, mode: 'insensitive' },
-                    },
-                    select: {
-                        id: true,
-                        title: true,
-                    },
-                    take: takeNum,
-                });
+                const results = await prisma.$queryRaw`
+                    SELECT v.id, v.title
+                    FROM venues v
+                    WHERE unaccent(v.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                `;
 
                 addToGeneric(genResults, results, 'venue');
             }
