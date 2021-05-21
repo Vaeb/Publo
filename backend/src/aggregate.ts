@@ -192,6 +192,14 @@ const levenshteinDistance = (str1: string, str2: string) => {
     return matrix[len1][len2];
 };
 
+const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
+    // eslint-disable-next-line symbol-description
+    const fail = Symbol();
+    return (await Promise.all(
+        arr.map(async item => ((await callback(item)) ? item : fail))
+    )).filter(i => i !== fail);
+};
+
 const fetchDblp = async () => {
     let enabled = true;
 
@@ -249,23 +257,24 @@ const fetchDblp = async () => {
                     if (dblpData.doi) dblpData.doi = dblpData.doi.toUpperCase();
                     return dblpData;
                 })
-                .filter((dblpData: any) => dblpData.title)
-                .filter(async (dblpData: any) => {
-                    const existingRow = await prisma.publication.findFirst({
-                        where: {
-                            OR: [
-                                { title: dblpData.title },
-                                ...(dblpData.doi ? [{ doi: dblpData.doi }] : []),
-                            ],
-                            // source: 'dblp',
-                        },
-                    });
-                    if (existingRow != null) {
-                        console.log('Data already exists, filtering out...');
-                        return false;
-                    }
-                    return true;
+                .filter((dblpData: any) => dblpData.title);
+
+            results = await filterAsync(results, async (dblpData: any) => {
+                const existingRow = await prisma.publication.findFirst({
+                    where: {
+                        OR: [
+                            { title: dblpData.title },
+                            ...(dblpData.doi ? [{ doi: dblpData.doi }] : []),
+                        ],
+                        // source: 'dblp',
+                    },
                 });
+                if (existingRow != null) {
+                    console.log('Data already exists, filtering out...');
+                    return false;
+                }
+                return true;
+            });
 
             if (results.length === 0) {
                 console.log('No results for query!');
@@ -275,15 +284,15 @@ const fetchDblp = async () => {
                 continue;
             }
 
-            const lastResultInDb = await prisma.publication.findFirst({
-                where: {
-                    OR: [
-                        { title: results[results.length - 1].title },
-                        ...(results[results.length - 1].doi ? [{ doi: results[results.length - 1].doi }] : []),
-                    ],
-                    // source: 'dblp',
-                },
-            });
+            // const lastResultInDb = await prisma.publication.findFirst({
+            //     where: {
+            //         OR: [
+            //             { title: results[results.length - 1].title },
+            //             ...(results[results.length - 1].doi ? [{ doi: results[results.length - 1].doi }] : []),
+            //         ],
+            //         // source: 'dblp',
+            //     },
+            // });
 
             // if (lastResultInDb != null) {
             //     console.log('Data already exists, skipping...');
