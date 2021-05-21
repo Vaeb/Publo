@@ -221,7 +221,7 @@ const fetchDblp = async () => {
     const shortSleep = 500;
     let nextSleep = defaultSleep;
 
-    while (enabled) {
+    while (enabled && numOptions) {
         const batchNumNow = ++batchNum;
 
         queryIndex = (queryIndex + 1) % numOptions;
@@ -229,7 +229,7 @@ const fetchDblp = async () => {
         queryOptions[queryIndexNow][1] += dblpSize;
         const [dblpYear, dblpOffset] = queryOptions[queryIndexNow];
         console.log('------------------------------------------------------------------------------------------------------------------');
-        console.log(queryIndexNow, '/', queryOptions.length, dblpYear, dblpOffset);
+        console.log(queryIndexNow, '/', numOptions, dblpYear, dblpOffset);
 
         if (startAt) {
             if (dblpYear < startAt[0] || dblpOffset < startAt[1]) {
@@ -578,7 +578,7 @@ const fetchDblp = async () => {
         // return;
     }
 
-    console.log('Finished fetching!');
+    console.log('Finished fetching!', numOptions, 'remaining');
 
     return () => {
         enabled = false;
