@@ -567,9 +567,9 @@ const fetchDblp = async () => {
             console.log(`Done, ran ${numCreated + numUpdated} queries (${numCreated} created; ${numUpdated} updated)`);
             // return;
         } catch (err) {
-            enabled = false;
+            // enabled = false;
             console.log('[Aggregation failed]:');
-            console.log(err);
+            console.error(err);
             // break;
         }
 
