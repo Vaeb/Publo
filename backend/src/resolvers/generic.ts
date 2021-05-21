@@ -96,6 +96,10 @@ export default {
                     WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
                 `;
 
+                console.log(results);
+                console.log('-');
+                console.dir(results, { depth: Infinity });
+
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
             }
 
