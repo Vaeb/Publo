@@ -1,5 +1,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 
+import he from 'he';
+
 import { Context, GenericResult, ResultType } from '../types';
 // import formatErrors from '../utils/formatErrors';
 
@@ -67,7 +69,7 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
             genResult.id = result.id;
             genResult.anyId = `${resultType}-${result.id}`;
             genResult.resultType = resultType;
-            genResult.text = result[propToText[resultType]];
+            genResult.text = he.decode(result[propToText[resultType]]);
             if (includeDetails && resultType === 'publication') {
                 lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
                 genResult.subText1 = result.venueTitle;
@@ -107,6 +109,8 @@ export default {
                 lookupLimit = null;
             }
 
+            const textEncoded = he.encode(text, { useNamedReferences: true });
+
             if (fetchAny || resultType === 'publication') {
                 const results = await prisma.$queryRaw`
                     SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
@@ -117,7 +121,7 @@ export default {
                         ON ap."B" = p.id
                     LEFT JOIN authors a
                         ON ap."A" = a."sourceId"
-                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
+                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication', includeDetails);
@@ -127,7 +131,7 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT a.id, a."fullName"
                     FROM authors a
-                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
+                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'author');
@@ -137,7 +141,7 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT v.id, v.title
                     FROM venues v
-                    WHERE unaccent(v.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
+                    WHERE unaccent(v.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'venue');
@@ -151,11 +155,11 @@ export default {
                     let aStrength = resultStrength[a.anyId];
                     let bStrength = resultStrength[b.anyId];
                     if (!aStrength) {
-                        aStrength = calcResultStrength(text, a);
+                        aStrength = calcResultStrength(textEncoded, a);
                         resultStrength[a.anyId] = aStrength;
                     }
                     if (!bStrength) {
-                        bStrength = calcResultStrength(text, b);
+                        bStrength = calcResultStrength(textEncoded, b);
                         resultStrength[b.anyId] = bStrength;
                     }
                     return bStrength - aStrength;

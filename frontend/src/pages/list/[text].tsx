@@ -4,7 +4,6 @@ import { gql, useQuery } from '@apollo/client';
 import {
     Box, VStack, StackDivider, Text, Link, Button, Icon,
 } from '@chakra-ui/react';
-import he from 'he';
 import NextLink from 'next/link';
 import { IoBookOutline, IoLogoTableau, IoNewspaperOutline, IoPersonCircleOutline } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
@@ -94,7 +93,7 @@ const List = ({ router, text, type: resultTypeAll }: any) => {
                                 <Icon as={typeIcons[res.resultType]} w="17px" h="17px" mr="5px" />
                                 <Text fontWeight="bold" fontSize="16px" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
                                     <NextLink href={`/${res.resultType}/[id]`} as={`/${res.resultType}/${res.id}`}>
-                                        {he.decode(res.text)}
+                                        {res.text}
                                     </NextLink>
                                 </Text>
                             </Box>
