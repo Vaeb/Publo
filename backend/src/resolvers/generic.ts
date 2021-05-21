@@ -8,7 +8,8 @@ import { escapeRegex } from '../utils/escapeRegex';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
 
-const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): number => { // Includes term, Offset from start, % filled, % matching caps
+// Factors: Includes term, Stand-alone term, Offset from start, % filled, % matching caps
+const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): number => {
     // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
     // 0 is acceptable min: 0.999 / 0.??? has a max-scale of just below x1000
     let strength = 0;
