@@ -23,7 +23,7 @@ const calcResultStrength = (searchText: string, result: GenericResult): number =
         const resultTextLen = resultText.length;
 
         const totalPosition = resultTextLen - searchTextLen;
-        const positionOff = (totalPosition - matchPos) / totalPosition;
+        const positionOff = totalPosition === 0 ? 0.999 : (totalPosition - matchPos) / totalPosition;
         // const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
         strength += Math.min(positionOff, 0.999) * 1e6; // Offset from the start
 
@@ -90,7 +90,7 @@ export default {
                         authors: { select: { fullName: true } },
                         venue: { select: { title: true } },
                     },
-                    take: 30000,
+                    take: 5000,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
@@ -105,7 +105,7 @@ export default {
                         id: true,
                         fullName: true,
                     },
-                    take: 30000,
+                    take: 5000,
                 });
 
                 addToGeneric(genResults, results, 'author');
@@ -120,7 +120,7 @@ export default {
                         id: true,
                         title: true,
                     },
-                    take: 30000,
+                    take: 5000,
                 });
 
                 addToGeneric(genResults, results, 'venue');
