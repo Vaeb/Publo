@@ -231,6 +231,7 @@ const fetchDblp = async () => {
         nextSleep = shortSleep;
 
         try {
+            console.log('Fetching DBLP...');
             const dblpUrlNow = `${dblpUrl}?q=${dblpYear}&format=json&h=${dblpSize}&f=${dblpOffset}`;
             const { data, ...response } = await axios.get(dblpUrlNow);
             console.log('fetchDblp response', dblpSize, dblpOffset, 'status', response.status, 'statusText', response.statusText, `(${dblpUrlNow})`);
@@ -273,6 +274,7 @@ const fetchDblp = async () => {
                 let crData: any;
 
                 try {
+                    // console.log('Fetching CrossRef...');
                     if (dblpData.doi) {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
                         const { data: { message: crResultItem } } = crResult;
