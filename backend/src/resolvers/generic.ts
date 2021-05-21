@@ -77,7 +77,7 @@ export default {
             let genResults = [] as GenericResult[];
 
             const fetchAny = resultType === 'any';
-            const numFetch = 1000;
+            const numFetch = 600;
 
             if (fetchAny || resultType === 'publication') {
                 const results = await prisma.publication.findMany({
