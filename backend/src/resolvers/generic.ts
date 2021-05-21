@@ -98,7 +98,7 @@ export default {
             let genResults = [] as GenericResult[];
 
             const fetchAny = resultType === 'any';
-            const numFetch = 450;
+            const numFetch = 1000;
             const takeNum = Math.max(limit, (fetchAny ? Math.floor(numFetch / 3) : numFetch));
 
             if (fetchAny || resultType === 'publication') {
