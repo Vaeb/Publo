@@ -8,6 +8,8 @@ import { SearchIcon } from '@chakra-ui/icons';
 import { IoLogoTableau, IoBookOutline, IoPersonCircleOutline, IoNewspaperOutline } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
 import NextLink from 'next/link';
+import he from 'he';
+
 import { GenericResult, ResultType } from '../../types';
 
 const findResults = gql`
@@ -103,7 +105,7 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
                         }
                     )}>
                         <Link variant="hover-col-dark1" onClick={onClick} w="100%">
-                            {RelevantIcon(res.resultType, false, 'sr-icon')}{res.text}
+                            {RelevantIcon(res.resultType, false, 'sr-icon')}{he.decode(res.text)}
                         </Link>
                     </NextLink>
                 </Box>
