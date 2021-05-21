@@ -6,7 +6,9 @@ import { Context, GenericResult, ResultType } from '../types';
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '');
 
 const calcResultStrength = (searchText: string, result: GenericResult): number => { // Includes term, Offset from start, % filled, % matching caps
-    let strength = 0; // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
+    // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
+    // 0 is acceptable min: 0.999 / 0.??? has a max-scale of just below x1000
+    let strength = 0;
 
     searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
@@ -78,6 +80,7 @@ export default {
 
             const fetchAny = resultType === 'any';
             const numFetch = 600;
+            const takeNum = Math.max(limit, (fetchAny ? Math.floor(numFetch / 3) : numFetch));
 
             if (fetchAny || resultType === 'publication') {
                 const results = await prisma.publication.findMany({
@@ -94,7 +97,7 @@ export default {
                         authors: { select: { fullName: true } },
                         venue: { select: { title: true } },
                     },
-                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
+                    take: takeNum,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
@@ -109,7 +112,7 @@ export default {
                         id: true,
                         fullName: true,
                     },
-                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
+                    take: takeNum,
                 });
 
                 addToGeneric(genResults, results, 'author');
@@ -124,7 +127,7 @@ export default {
                         id: true,
                         title: true,
                     },
-                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
+                    take: takeNum,
                 });
 
                 addToGeneric(genResults, results, 'venue');

@@ -25,7 +25,7 @@ import { GenericResult } from '../../types';
 
 const findResults = gql`
     query($text: String!, $resultType: String) {
-        findResults(text: $text, resultType: $resultType, limit: 100) {
+        findResults(text: $text, resultType: $resultType, limit: 500) {
             id
             resultType
             text
