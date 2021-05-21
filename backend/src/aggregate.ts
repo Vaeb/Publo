@@ -204,7 +204,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1944, 420];
+    let startAt: any = [1991, 480];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -569,7 +569,7 @@ const fetchDblp = async () => {
         } catch (err) {
             enabled = false;
             console.log('[Aggregation failed]:');
-            console.error(err);
+            console.log(err);
             // break;
         }
 
