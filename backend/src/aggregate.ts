@@ -282,6 +282,8 @@ const fetchDblp = async () => {
                 numOptions--;
                 queryIndex--;
                 continue;
+            } else {
+                console.log('Fetching crossref data...');
             }
 
             // const lastResultInDb = await prisma.publication.findFirst({
