@@ -51,6 +51,7 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
     results.forEach((result: any) => {
         const genResult = {} as GenericResult;
         genResult.id = result.id;
+        genResult.anyId = `${resultType}-${result.id}`;
         genResult.resultType = resultType;
         genResult.text = result[propToText[resultType]];
         if (resultType === 'publication') {
@@ -75,7 +76,10 @@ export default {
 
             let genResults = [] as GenericResult[];
 
-            if (resultType === 'any' || resultType === 'publication') {
+            const fetchAny = resultType === 'any';
+            const numFetch = 1000;
+
+            if (fetchAny || resultType === 'publication') {
                 const results = await prisma.publication.findMany({
                     where: {
                         OR: [
@@ -90,13 +94,13 @@ export default {
                         authors: { select: { fullName: true } },
                         venue: { select: { title: true } },
                     },
-                    take: 5000,
+                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
                 });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
             }
 
-            if (resultType === 'any' || resultType === 'author') {
+            if (fetchAny || resultType === 'author') {
                 const results = await prisma.author.findMany({
                     where: {
                         fullName: { contains: text, mode: 'insensitive' },
@@ -105,13 +109,13 @@ export default {
                         id: true,
                         fullName: true,
                     },
-                    take: 5000,
+                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
                 });
 
                 addToGeneric(genResults, results, 'author');
             }
 
-            if (resultType === 'any' || resultType === 'venue') {
+            if (fetchAny || resultType === 'venue') {
                 const results = await prisma.venue.findMany({
                     where: {
                         title: { contains: text, mode: 'insensitive' },
@@ -120,7 +124,7 @@ export default {
                         id: true,
                         title: true,
                     },
-                    take: 5000,
+                    take: fetchAny ? Math.floor(numFetch / 3) : numFetch,
                 });
 
                 addToGeneric(genResults, results, 'venue');
@@ -131,15 +135,15 @@ export default {
             const resultStrength: { [key: string]: number } = {};
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
-                    let aStrength = resultStrength[a.id];
-                    let bStrength = resultStrength[b.id];
+                    let aStrength = resultStrength[a.anyId];
+                    let bStrength = resultStrength[b.anyId];
                     if (!aStrength) {
                         aStrength = calcResultStrength(text, a);
-                        resultStrength[a.id] = aStrength;
+                        resultStrength[a.anyId] = aStrength;
                     }
                     if (!bStrength) {
                         bStrength = calcResultStrength(text, b);
-                        resultStrength[b.id] = bStrength;
+                        resultStrength[b.anyId] = bStrength;
                     }
                     return bStrength - aStrength;
                 })

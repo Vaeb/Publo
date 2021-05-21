@@ -11,6 +11,7 @@ export type ResultType = 'any' | 'publication' | 'author' | 'venue';
 
 export interface GenericResult {
     id: number;
+    anyId: string;
     resultType: ResultType;
     text: string;
     subText1?: string;
