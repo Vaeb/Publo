@@ -265,10 +265,10 @@ const fetchDblp = async () => {
                 },
             });
 
-            if (lastResultInDb != null) {
-                console.log('Data already exists, skipping...');
-                continue;
-            }
+            // if (lastResultInDb != null) {
+            //     console.log('Data already exists, skipping...');
+            //     continue;
+            // }
 
             const crDataAll: any = (await Promise.all(results.map(async (dblpData: any) => { // Waits for all promises (running simultaneously) to finish executing
                 let crData: any;
