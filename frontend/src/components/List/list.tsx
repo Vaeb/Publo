@@ -6,7 +6,6 @@ import {
 } from '@chakra-ui/react';
 import { IoBookOutline, IoLogoTableau, IoNewspaperOutline, IoPersonCircleOutline } from 'react-icons/io5';
 import { IconType } from 'react-icons/lib';
-import he from 'he';
 
 import { GenericResult, ResultType } from '../../types';
 
@@ -62,7 +61,7 @@ export const List = ({ results }: ListParams): ReactElement => {
                                 <Icon as={typeIcons[res.resultType]} w="17px" h="17px" mr="5px" />
                                 <Text fontWeight="bold" fontSize="16px" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
                                     <NextLink href={`/${res.resultType}/[id]`} as={`/${res.resultType}/${res.id}`}>
-                                        {he.decode(res.text)}
+                                        {res.text}
                                     </NextLink>
                                 </Text>
                             </Box>

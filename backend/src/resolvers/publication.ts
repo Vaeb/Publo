@@ -1,5 +1,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 
+import he from 'he';
+
 // import { Author, Publication, Venue } from '.prisma/client';
 import { Context } from '../types';
 import formatErrors from '../utils/formatErrors';
@@ -37,6 +39,7 @@ export default {
             let { publications } = publicationRoot;
             let mergedPubl = publications[0];
             publications = publications.filter((publ) => {
+                publ.title = he.decode(publ.title);
                 if (publ.source === 'merged') {
                     mergedPubl = publ;
                     return false;
@@ -49,17 +52,27 @@ export default {
         },
         getPublication: async (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
             console.log('Received request for getPublication:', id);
-            return prisma.publication.findUnique({
+
+            const publication = await prisma.publication.findUnique({
                 where: { id },
                 include: { authors: true, venue: true },
             });
+
+            if (publication) publication.title = he.decode(publication.title);
+
+            return publication;
         },
         getMergedPublication: async (_parent: any, { rootId }: any, { prisma }: Context): Promise<any> => {
             console.log('Received request for getMergedPublication:', rootId);
-            return prisma.publication.findFirst({
+
+            const publication = await prisma.publication.findFirst({
                 where: { publicationRootId: rootId, source: 'merged' },
                 include: { authors: true, venue: true },
             });
+
+            if (publication) publication.title = he.decode(publication.title);
+
+            return publication;
         },
         getAllPublications: async (_parent: any, { limit }: any, { prisma }: Context): Promise<any> => {
             const results = await prisma.publicationRoot.findMany({
@@ -72,31 +85,15 @@ export default {
                 take: limit,
             });
 
+            results.forEach((publRoot) => {
+                publRoot.publications.forEach((publ) => {
+                    publ.title = he.decode(publ.title);
+                });
+            });
+
             // console.dir(results, { depth: Infinity });
 
             return results.map(result => result.publications[0]);
-        },
-        findPublications: async (_parent: any, { text, limit }: any, { prisma }: Context): Promise<any> => {
-            console.log('Received request for findPublications:', text);
-
-            if (!text.length) return [];
-
-            const results = await prisma.publication.findMany({
-                where: {
-                    OR: [
-                        { title: { contains: text, mode: 'insensitive' } },
-                    ],
-                },
-                take: limit,
-            });
-
-            results.sort((a, b) => {
-                const aIndex = a.title.indexOf(text);
-                const bIndex = b.title.indexOf(text);
-                return aIndex - bIndex;
-            });
-
-            return results;
         },
     },
     Mutation: {

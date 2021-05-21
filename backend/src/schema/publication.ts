@@ -34,7 +34,6 @@ export default `
         getPublication(rootId: Int!): Publication
         getMergedPublication(id: Int!): Publication
         getAllPublications(limit: Int): [Publication]!
-        findPublications(text: String!, type: String, limit: Int): [Publication]!
     }
 
     type Mutation {

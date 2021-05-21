@@ -1,5 +1,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 
+import he from 'he';
+
 import { Context } from '../types';
 
 export default {
@@ -13,8 +15,8 @@ export default {
         },
     },
     Venue: {
-        publications: async ({ id: recordId }: any, { limit }: any, { prisma }: Context): Promise<any> =>
-            (await prisma.venue.findUnique({
+        publications: async ({ id: recordId }: any, { limit }: any, { prisma }: Context): Promise<any> => {
+            const venuePubs = await prisma.venue.findUnique({
                 where: { id: recordId },
                 select: {
                     publications: {
@@ -22,6 +24,15 @@ export default {
                         take: limit,
                     },
                 },
-            }))?.publications,
+            });
+
+            if (venuePubs) {
+                venuePubs.publications.forEach((publ) => {
+                    publ.title = he.decode(publ.title);
+                });
+            }
+
+            return venuePubs?.publications;
+        },
     },
 };
