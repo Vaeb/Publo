@@ -337,7 +337,7 @@ const fetchDblp = async () => {
                 const crDataUse: any = crData ? {
                     source: 'crossref',
                     title: cleanStringField(crData.title[0]),
-                    doi: crData.DOI.toUpperCase(),
+                    doi: crData.DOI?.toUpperCase(),
                     type: parsePublicationType(crData.type),
                     year: crData.created['date-parts'][0][0],
                     stampCreated: new Date(crData.created.timestamp),

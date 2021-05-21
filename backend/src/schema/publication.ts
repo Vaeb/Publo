@@ -10,7 +10,7 @@ export default `
         source: String
         resultType: String
         title: String!
-        doi: String!
+        doi: String
         type: String!
         year: Int!
         stampCreated: String

@@ -304,8 +304,8 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
                             <span className="interactive" onClick={() => copyText('doi-link')}>
                                 DOI:{' '}
                             </span>
-                            <Link id="doi-link" target="_blank" href={`https://doi.org/${mergedPubl.doi.toUpperCase()}`}>
-                                {mergedPubl.doi.toUpperCase()}
+                            <Link id="doi-link" target="_blank" href={`https://doi.org/${mergedPubl.doi?.toUpperCase()}`}>
+                                {mergedPubl.doi?.toUpperCase()}
                             </Link>
                         </Box>
                         <Box fontSize="15px">
