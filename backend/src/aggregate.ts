@@ -204,7 +204,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1991, 480];
+    let startAt: any = [1997, 480];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
