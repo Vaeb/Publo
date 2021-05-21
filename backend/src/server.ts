@@ -10,7 +10,18 @@ const { PrismaClient } = PrismaWrapper;
 
 console.log('[IORM] Initializing Prisma...');
 
-export const prisma = new PrismaClient();
+export const prisma = new PrismaClient({
+    log: [
+        {
+            emit: 'event',
+            level: 'query',
+        },
+    ],
+});
+
+prisma.$on('query', async (e) => {
+    console.log(`PRISMA LOG: ${e.query} <<< ${e.params}`);
+});
 
 console.log('[IORM] Done!');
 
