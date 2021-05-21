@@ -84,7 +84,7 @@ const simplifyForComparison = (str: string) => str.replace(/^\W+|\W+$|[^\w\s]+/g
 // normalize decomposes accents into separate character, then the regex removes the character for smart comparison
 const parseAuthorName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, ''));
 
-const parseVenueName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, ''));
+const parsePureName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, ''));
 
 const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
     fullName = fullName.toLowerCase();
@@ -275,7 +275,7 @@ const fetchDblp = async () => {
                         const { data: { message: crResultItem } } = crResult;
                         crData = crResultItem;
                     } else {
-                        const crResult = await axios.get(`${crossRefWorksUrl}?query=${dblpData.title}`); // Title has been cleaned/tidied prior
+                        const crResult = await axios.get(`${crossRefWorksUrl}?query=${parsePureName(dblpData.title)}`);
                         const { data: { message: { items: [crResultItem] } } } = crResult;
                         // console.log('crResultItem', crResultItem);
                         if (crResultItem && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title[0])) {
@@ -286,9 +286,8 @@ const fetchDblp = async () => {
                     console.log(`${err.response?.status} CrossRef request yielded no data:`, err);
                     nextSleep = 1000 * 60;
                     if (!err.response) {
-                        throw new Error('Something went wrong (no CrossRef HTTP response)...');
+                        console.log('Something went wrong (no CrossRef HTTP response)...');
                     }
-                    return undefined;
                 }
 
                 return { dblpData, crData };
@@ -328,11 +327,11 @@ const fetchDblp = async () => {
                 });
 
                 const crVenueList = (crData?.['container-title'] || [])
-                    .map((venue: string) => parseVenueName(venue));
+                    .map((venue: string) => parsePureName(venue));
 
                 const dblpVenueList = (Array.isArray(dblpData.venue) ? dblpData.venue : [dblpData.venue])
                     .filter((venue: any) => venue != null)
-                    .map((venue: string) => parseVenueName(venue));
+                    .map((venue: string) => parsePureName(venue));
 
                 const crDataUse: any = crData ? {
                     source: 'crossref',
