@@ -191,8 +191,8 @@ const levenshteinDistance = (str1: string, str2: string) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    let startAt;
-    // let startAt: any = [1990, 0];
+    // let startAt;
+    let startAt: any = [1971, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -289,7 +289,8 @@ const fetchDblp = async () => {
                     }
                 } catch (err) {
                     console.log(`${err.response?.status} CrossRef request yielded no data:`, err);
-                    nextSleep = 1000 * 60;
+                    // nextSleep = 1000 * 60;
+                    nextSleep = defaultSleep * 1.5;
                     if (!err.response) {
                         console.log('Something went wrong (no CrossRef HTTP response)...');
                     }
