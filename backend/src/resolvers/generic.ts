@@ -11,7 +11,7 @@ const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u03
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
 // Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
-const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): BigInt => {
+const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): bigint => {
     // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
     // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
@@ -158,7 +158,7 @@ export default {
 
             console.log('Sorting results...');
 
-            const resultStrength: { [key: string]: number } = {};
+            const resultStrength: { [key: string]: bigint } = {};
             const textSafe = escapeRegex(textEncoded.toLowerCase());
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
@@ -172,7 +172,9 @@ export default {
                         bStrength = calcResultStrength(textEncoded, b, textSafe);
                         resultStrength[b.anyId] = bStrength;
                     }
-                    return bStrength - aStrength;
+                    if (bStrength > aStrength) return 1;
+                    if (aStrength > bStrength) return -1;
+                    return 0;
                 })
                 .slice(0, fetchLimit);
 
