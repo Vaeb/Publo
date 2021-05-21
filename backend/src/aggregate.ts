@@ -98,6 +98,8 @@ const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
 };
 
 const mergeAuthorData = (authorSources: Author[][]) => {
+    if (authorSources.length === 1) return;
+
     const authorKeys = [...new Set([...authorSources.map(authorsSource => Object.keys(authorsSource[0] || [])).flat(1)])] as (keyof Author)[];
 
     for (const authorSource1 of authorSources[0]) {
@@ -107,10 +109,10 @@ const mergeAuthorData = (authorSources: Author[][]) => {
             const authorSourceNext = authorSourceNextObj[authorMatcher];
             if (authorSourceNext) {
                 for (const key of authorKeys) {
-                    if (authorSource1[key]) {
-                        (authorSource1[key] as any) = authorSourceNext[key];
-                    } else if (authorSourceNext[key] === undefined) {
+                    if (authorSourceNext[key] === undefined) {
                         authorSourceNext[key] = authorSource1[key];
+                    } else if (authorSource1[key] === undefined) {
+                        (authorSource1[key] as any) = authorSourceNext[key];
                     }
                 }
             }
@@ -119,6 +121,8 @@ const mergeAuthorData = (authorSources: Author[][]) => {
 };
 
 const getMergedPublData = (publicationSources: Publication[]) => {
+    if (publicationSources.length === 1) return { ...publicationSources[0] };
+
     const mergedData: any = {};
     const publKeys = [...new Set([...publicationSources.map(publication => Object.keys(publication)).flat(1)])] as (keyof Publication)[];
 
@@ -287,17 +291,17 @@ const fetchDblp = async () => {
                     return undefined;
                 }
 
-                return [dblpData, crData];
-            }))).filter((crData: any) => crData != undefined);
+                return { dblpData, crData };
+            })));
 
             let numCreated = 0;
             let numUpdated = 0;
 
-            for (const [dblpData, crData] of crDataAll) {
+            for (const { dblpData, crData } of crDataAll) {
                 // if (enabled === false) return undefined;
                 console.log(new Date(), '|', batchNumNow, '|', dblpData.doi, '|', dblpData.title);
 
-                const crAuthorList = (crData.author || [])
+                const crAuthorList = (crData?.author || [])
                     .filter((author: any) => author.given != undefined && author.family != undefined)
                     .map((author: any) => {
                         const firstName = parseAuthorName(author.given);
@@ -315,7 +319,7 @@ const fetchDblp = async () => {
                     })
                     .filter((author: any) => author.firstName && author.lastName && author.fullName);
 
-                mergeAuthorData([crAuthorList, dblpAuthorList]);
+                mergeAuthorData([dblpAuthorList, ...(crData ? [crAuthorList] : [])]);
 
                 crAuthorList.forEach((author: any) => { // Add sourceIds to the CR authors that didn't have a matching DBLP author
                     if (author.sourceId === undefined) {
@@ -323,14 +327,14 @@ const fetchDblp = async () => {
                     }
                 });
 
-                const crVenueList = (crData['container-title'] || [])
+                const crVenueList = (crData?.['container-title'] || [])
                     .map((venue: string) => parseVenueName(venue));
 
                 const dblpVenueList = (Array.isArray(dblpData.venue) ? dblpData.venue : [dblpData.venue])
                     .filter((venue: any) => venue != null)
                     .map((venue: string) => parseVenueName(venue));
 
-                const crDataUse: any = {
+                const crDataUse: any = crData ? {
                     source: 'crossref',
                     title: cleanStringField(crData.title[0]),
                     doi: crData.DOI.toUpperCase(),
@@ -355,7 +359,7 @@ const fetchDblp = async () => {
                             where: { title: crVenueList[0] },
                         },
                     } : undefined,
-                };
+                } : undefined;
 
                 const dblpDataUse: any = {
                     source: 'dblp',
@@ -384,12 +388,14 @@ const fetchDblp = async () => {
                     } : undefined,
                 };
 
+                if (!crDataUse) console.log('Not creating CrossRef publ; no data');
+
                 let meetsRequired = true;
-                const requiredFields = ['title', 'doi', 'type', 'year'];
+                const requiredFields = ['title', 'type', 'year'];
 
                 for (const field of requiredFields) {
-                    if (!crDataUse[field] || !dblpDataUse[field]) {
-                        console.log(`Missing ${field} (${!crDataUse[field] ? 'CrossRef' : 'DBLP'}), skipping...`);
+                    if (!dblpDataUse[field] || (crDataUse && !crDataUse[field])) {
+                        console.log(`Missing ${field} (${!dblpDataUse[field] ? 'DBLP' : 'CrossRef'}), skipping...`);
                         meetsRequired = false;
                         break;
                     }
@@ -397,7 +403,7 @@ const fetchDblp = async () => {
 
                 if (!meetsRequired) continue;
 
-                const mergedDataUse = getMergedPublData([dblpDataUse, crDataUse]);
+                const mergedDataUse = getMergedPublData([dblpDataUse, ...(crDataUse ? [crDataUse] : [])]);
 
                 // const publicationRootConnect = {
                 //     connect: {
@@ -432,17 +438,17 @@ const fetchDblp = async () => {
                 const createPublications = {
                     create: [
                         mergedDataUse,
-                        crDataUse,
                         dblpDataUse,
+                        ...(crDataUse ? [crDataUse] : []),
                     ],
                 };
 
                 const { id: publRootId } = (await prisma.publicationRoot.findFirst({
                     where: {
                         OR: [
-                            { doi: crDataUse.doi },
+                            { doi: dblpData.doi },
                             { title: dblpData.title },
-                            { title: crDataUse.title },
+                            ...(crDataUse ? [{ title: crDataUse.title }] : []),
                         ],
                     },
                 }) || {});
@@ -471,8 +477,8 @@ const fetchDblp = async () => {
                     numCreated++;
                     await prisma.publicationRoot.create({
                         data: {
-                            doi: crDataUse.doi,
-                            title: crDataUse.title,
+                            doi: dblpData.doi,
+                            title: dblpData.title,
                             publications: createPublications,
                         },
                     });
