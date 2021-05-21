@@ -16,6 +16,7 @@ const calcResultStrength = (searchText: string, result: GenericResult, searchTex
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
     // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
     let strength = BigInt(0);
+    if (searchText === '') return strength;
 
     searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
@@ -24,10 +25,7 @@ const calcResultStrength = (searchText: string, result: GenericResult, searchTex
     const resultTextLower = resultText.toLowerCase();
     const matchPos = resultTextLower.indexOf(searchTextLower);
 
-    if (searchText === '') {
-        // strength = BigInt((1e4 - resultText.length) / 1e4);
-        strength = BigInt(1);
-    } else if (matchPos >= 0) {
+    if (matchPos >= 0) {
         strength += BigInt(0.9999e20); // Result text includes search term
 
         const searchTextLen = searchText.length;
