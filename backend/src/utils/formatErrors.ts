@@ -3,7 +3,7 @@ import nodeUtils from 'util';
 
 import { PrismaClient } from '../types';
 
-export default (e: any, prisma: PrismaClient): any[] => {
+export const formatErrors = (e: any, prisma: PrismaClient): any[] => {
     // if (e instanceof models.sequelize.ValidationError) {
     //     return e.errors.map((x: any) => pick(x, ['path', 'message']));
     // }

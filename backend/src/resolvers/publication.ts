@@ -4,17 +4,7 @@ import he from 'he';
 
 // import { Author, Publication, Venue } from '.prisma/client';
 import { Context } from '../types';
-import formatErrors from '../utils/formatErrors';
-
-declare global {
-    interface RegExpConstructor {
-        escape: (str: string) => string;
-    }
-}
-
-RegExp.escape = str => (
-    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-);
+import { formatErrors } from '../utils/formatErrors';
 
 export default {
     Query: {

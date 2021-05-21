@@ -3,17 +3,19 @@
 import he from 'he';
 
 import { Context, GenericResult, ResultType } from '../types';
-// import formatErrors from '../utils/formatErrors';
+// import { formatErrors } from '../utils/formatErrors';
+import { escapeRegex } from '../utils/escapeRegex';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
 
-const calcResultStrength = (searchText: string, result: GenericResult): number => { // Includes term, Offset from start, % filled, % matching caps
+const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): number => { // Includes term, Offset from start, % filled, % matching caps
     // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
     // 0 is acceptable min: 0.999 / 0.??? has a max-scale of just below x1000
     let strength = 0;
 
     searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
+    if (searchTextSafe == null) searchTextSafe = escapeRegex(searchTextLower);
     const resultText = normalizeResultText(result.text);
     const resultTextLower = resultText.toLowerCase();
     const matchPos = resultTextLower.indexOf(searchTextLower);
@@ -22,10 +24,13 @@ const calcResultStrength = (searchText: string, result: GenericResult): number =
         // strength = (9e5 - resultText.length) / 9e5; // Assume result title/name will not be over 9e5 characters
         strength = 0;
     } else if (matchPos >= 0) {
-        strength += 0.999 * 1e9; // Result text includes search term
+        strength += 0.999 * 1e12; // Result text includes search term
 
         const searchTextLen = searchText.length;
         const resultTextLen = resultText.length;
+
+        const fullTerm = new RegExp(`\\b${searchTextSafe}\\b`).test(resultTextLower) ? 0.999 : 0;
+        strength += fullTerm * 1e9;
 
         const totalPosition = resultTextLen - searchTextLen;
         const positionOff = totalPosition === 0 ? 0.999 : (totalPosition - matchPos) / totalPosition;
@@ -150,16 +155,17 @@ export default {
             console.log('Sorting results...');
 
             const resultStrength: { [key: string]: number } = {};
+            const textSafe = escapeRegex(textEncoded.toLowerCase());
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
                     let aStrength = resultStrength[a.anyId];
                     let bStrength = resultStrength[b.anyId];
                     if (!aStrength) {
-                        aStrength = calcResultStrength(textEncoded, a);
+                        aStrength = calcResultStrength(textEncoded, a, textSafe);
                         resultStrength[a.anyId] = aStrength;
                     }
                     if (!bStrength) {
-                        bStrength = calcResultStrength(textEncoded, b);
+                        bStrength = calcResultStrength(textEncoded, b, textSafe);
                         resultStrength[b.anyId] = bStrength;
                     }
                     return bStrength - aStrength;
