@@ -191,8 +191,8 @@ const levenshteinDistance = (str1: string, str2: string) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    // let startAt;
-    let startAt: any = [1956, 240];
+    let startAt;
+    // let startAt: any = [1956, 240];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -256,8 +256,11 @@ const fetchDblp = async () => {
 
             const lastResultInDb = await prisma.publication.findFirst({
                 where: {
-                    title: results[results.length - 1].title,
-                    source: 'dblp',
+                    OR: [
+                        { title: results[results.length - 1].title },
+                        ...(results[results.length - 1].doi ? [{ doi: results[results.length - 1].doi }] : []),
+                    ],
+                    // source: 'dblp',
                 },
             });
 
