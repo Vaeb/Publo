@@ -278,12 +278,14 @@ const fetchDblp = async () => {
                     if (dblpData.doi) {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
                         const { data: { message: crResultItem } } = crResult;
-                        crData = crResultItem;
+                        if (crResultItem?.title?.[0]) {
+                            crData = crResultItem;
+                        }
                     } else {
                         const crResult = await axios.get(`${crossRefWorksUrl}?query=${encodeURIComponent(parsePureName(dblpData.title) as string)}`);
                         const { data: { message: { items: [crResultItem] } } } = crResult;
                         // console.log('crResultItem', crResultItem);
-                        if (crResultItem && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title[0])) {
+                        if (crResultItem?.title?.[0] && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title[0])) {
                             crData = crResultItem;
                         }
                     }
