@@ -192,7 +192,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1971, 0];
+    let startAt: any = [1996, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -458,35 +458,39 @@ const fetchDblp = async () => {
                     },
                 }) || {});
 
-                if (publRootId) {
-                    const { id: publId } = (await prisma.publication.findFirst({
-                        where: {
-                            publicationRootId: publRootId,
-                            source: 'merged',
-                        },
-                    }) || {});
-                    if (!publId) {
-                        console.log(`(U) Updating publication_root ${publRootId} to include newly created publications`);
-                        numUpdated++;
-                        await prisma.publicationRoot.update({
-                            where: { id: publRootId },
+                try {
+                    if (publRootId) {
+                        const { id: publId } = (await prisma.publication.findFirst({
+                            where: {
+                                publicationRootId: publRootId,
+                                source: 'merged',
+                            },
+                        }) || {});
+                        if (!publId) {
+                            console.log(`(U) Updating publication_root ${publRootId} to include newly created publications`);
+                            numUpdated++;
+                            await prisma.publicationRoot.update({
+                                where: { id: publRootId },
+                                data: {
+                                    publications: createPublications, // Make sure it isn't overriding the existing ones
+                                },
+                            });
+                        } else {
+                            console.log(`(X) Publication (${publId}) already exists under publication_root ${publRootId}, skipping...`);
+                        }
+                    } else {
+                        console.log('(C) Creating new publication_root and publications');
+                        numCreated++;
+                        await prisma.publicationRoot.create({
                             data: {
-                                publications: createPublications, // Make sure it isn't overriding the existing ones
+                                doi: dblpData.doi,
+                                title: dblpData.title,
+                                publications: createPublications,
                             },
                         });
-                    } else {
-                        console.log(`(X) Publication (${publId}) already exists under publication_root ${publRootId}, skipping...`);
                     }
-                } else {
-                    console.log('(C) Creating new publication_root and publications');
-                    numCreated++;
-                    await prisma.publicationRoot.create({
-                        data: {
-                            doi: dblpData.doi,
-                            title: dblpData.title,
-                            publications: createPublications,
-                        },
-                    });
+                } catch (err) {
+                    console.log('>>> Prisma call failed:', err);
                 }
 
                 // await prisma.publication.create({
