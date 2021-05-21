@@ -235,7 +235,7 @@ const fetchDblp = async () => {
             const { data, ...response } = await axios.get(dblpUrlNow);
             console.log('fetchDblp response', dblpSize, dblpOffset, 'status', response.status, 'statusText', response.statusText, `(${dblpUrlNow})`);
 
-            let results = data.result.hits.hit;
+            let results = data?.result?.hits?.hit;
 
             results = (results || [])
                 // .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
@@ -257,7 +257,7 @@ const fetchDblp = async () => {
             const lastResultInDb = await prisma.publication.findFirst({
                 where: {
                     title: results[results.length - 1].title,
-                    source: 'merged',
+                    source: 'dblp',
                 },
             });
 
