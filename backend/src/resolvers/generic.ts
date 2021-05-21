@@ -25,10 +25,10 @@ const calcResultStrength = (searchText: string, result: GenericResult): number =
         const totalPosition = resultTextLen - searchTextLen;
         const positionOff = (totalPosition - matchPos) / totalPosition;
         // const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
-        strength += Math.min(positionOff * 1e6, 0.999); // Offset from the start
+        strength += Math.min(positionOff, 0.999) * 1e6; // Offset from the start
 
         const filledPerc = searchTextLen / resultTextLen;
-        strength += Math.min(filledPerc * 1e3, 0.999); // Percentage of result text that search term fills
+        strength += Math.min(filledPerc, 0.999) * 1e3; // Percentage of result text that search term fills
 
         let numCaps = 0;
         for (let i = 0; i < searchTextLen; i++) {
