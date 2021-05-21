@@ -43,10 +43,12 @@ console.log('Aggregating publications...');
 //     pdfUrl?: string
 // }
 
-const cleanStringField = (str: string) => str.replace(/^\W+|\W+$/g, '');
+const cleanStringField = (str?: string) => (str != null ? str.replace(/^\W+|\W+$/g, '') : undefined);
 
-const parseVenueTypeFromField = (fieldVal: string, source: string) => {
+const parseVenueTypeFromField = (fieldVal: string | null, source: string) => {
     let venueType = 'Unknown';
+    if (!fieldVal) return venueType;
+
     fieldVal = fieldVal.toLowerCase();
 
     if (source === 'crossref') {
@@ -66,8 +68,10 @@ const parseVenueTypeFromField = (fieldVal: string, source: string) => {
     return venueType;
 };
 
-const parsePublicationType = (value: string) => {
+const parsePublicationType = (value: string | null) => {
     let newValue = 'Unknown';
+    if (!value) return newValue;
+
     value = value.toLowerCase();
 
     if (/journal\W*article/.test(value)) {
@@ -82,9 +86,9 @@ const parsePublicationType = (value: string) => {
 const simplifyForComparison = (str: string) => str.replace(/^\W+|\W+$|[^\w\s]+/g, '').replace(/\s+/g, ' ').toLowerCase();
 
 // normalize decomposes accents into separate character, then the regex removes the character for smart comparison
-const parseAuthorName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, ''));
+const parseAuthorName = (name?: string) => (name != null ? name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, '') : undefined);
 
-const parsePureName = (name?: string) => (name == null ? undefined : name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, ''));
+const parsePureName = (name?: string) => (name != null ? name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '') : undefined);
 
 const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
     fullName = fullName.toLowerCase();
@@ -192,7 +196,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [2019, 0];
+    let startAt: any = [1998, 20];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -346,8 +350,8 @@ const fetchDblp = async () => {
                     title: cleanStringField(crData.title[0]),
                     doi: crData.DOI?.toUpperCase(),
                     type: parsePublicationType(crData.type),
-                    year: crData.created['date-parts'][0][0],
-                    stampCreated: new Date(crData.created.timestamp),
+                    year: crData.created?.['date-parts']?.[0]?.[0],
+                    stampCreated: crData.created?.timestamp ? new Date(crData.created.timestamp) : null,
                     volume: crData.volume,
                     pdfUrl: crData.link?.[0]?.URL,
                     pageUrl: crData.URL,
@@ -373,7 +377,7 @@ const fetchDblp = async () => {
                     title: dblpData.title,
                     doi: dblpData.doi,
                     type: parsePublicationType(dblpData.type),
-                    year: Number(dblpData.year),
+                    year: dblpData.year ? Number(dblpData.year) : null,
                     volume: dblpData.volume,
                     number: dblpData.number,
                     pages: dblpData.pages,
