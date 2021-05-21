@@ -196,7 +196,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1998, 20];
+    let startAt: any = [1944, 420];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -249,7 +249,23 @@ const fetchDblp = async () => {
                     if (dblpData.doi) dblpData.doi = dblpData.doi.toUpperCase();
                     return dblpData;
                 })
-                .filter((dblpData: any) => dblpData.title);
+                .filter((dblpData: any) => dblpData.title)
+                .filter(async (dblpData: any) => {
+                    const existingRow = await prisma.publication.findFirst({
+                        where: {
+                            OR: [
+                                { title: dblpData.title },
+                                ...(dblpData.doi ? [{ doi: dblpData.doi }] : []),
+                            ],
+                            // source: 'dblp',
+                        },
+                    });
+                    if (existingRow != null) {
+                        console.log('Data already exists, filtering out...');
+                        return false;
+                    }
+                    return true;
+                });
 
             if (results.length === 0) {
                 console.log('No results for query!');
