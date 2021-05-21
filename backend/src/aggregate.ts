@@ -530,7 +530,7 @@ const fetchDblp = async () => {
             enabled = false;
             console.log('[Aggregation failed]:');
             console.error(err);
-            break;
+            // break;
         }
 
         if (nextSleep === shortSleep) nextSleep = defaultSleep;
