@@ -111,12 +111,12 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
                     FROM publications p
+                    LEFT JOIN venues v
+                        ON p."venueId" = v.id
                     LEFT JOIN "_AuthorToPublication" ap
                         ON ap."B" = p.id
                     LEFT JOIN authors a
                         ON ap."A" = a."sourceId"
-                    LEFT JOIN venues v
-                        ON p."venueId" = v.id
                     WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
                 `;
 
