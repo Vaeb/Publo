@@ -239,7 +239,8 @@ const fetchDblp = async () => {
                     dblpData.title = cleanStringField(dblpData.title);
                     if (dblpData.doi) dblpData.doi = dblpData.doi.toUpperCase();
                     return dblpData;
-                });
+                })
+                .filter((dblpData: any) => dblpData.title);
 
             if (results.length === 0) {
                 console.log('No results for query!');
