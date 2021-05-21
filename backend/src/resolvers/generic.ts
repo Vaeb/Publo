@@ -8,11 +8,14 @@ import { escapeRegex } from '../utils/escapeRegex';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
 
-// Factors: Includes term, Stand-alone term, Offset from start, % filled, % matching caps
-const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): number => {
-    // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
-    // 0 is acceptable min: 0.999 / 0.??? has a max-scale of just below x1000
-    let strength = 0;
+const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
+
+// Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
+const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): BigInt => {
+    // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
+    // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
+    // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
+    let strength = BigInt(0);
 
     searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
@@ -22,31 +25,31 @@ const calcResultStrength = (searchText: string, result: GenericResult, searchTex
     const matchPos = resultTextLower.indexOf(searchTextLower);
 
     if (searchText === '') {
-        // strength = (9e5 - resultText.length) / 9e5; // Assume result title/name will not be over 9e5 characters
-        strength = 0;
+        // strength = BigInt((1e4 - resultText.length) / 1e4);
+        strength = BigInt(1);
     } else if (matchPos >= 0) {
-        strength += 0.999 * 1e12; // Result text includes search term
+        strength += BigInt(0.9999e20); // Result text includes search term
 
         const searchTextLen = searchText.length;
         const resultTextLen = resultText.length;
 
-        const fullTerm = new RegExp(`\\b${searchTextSafe}\\b`).test(resultTextLower) ? 0.999 : 0;
-        strength += fullTerm * 1e9;
+        const fullTerm = new RegExp(`\\b${searchTextSafe}\\b`).test(resultTextLower) ? 1 : 0;
+        strength += parseBigVal(fullTerm, 1e12) * BigInt(1e4); // Percentage offset from start
 
-        const totalPosition = resultTextLen - searchTextLen;
-        const positionOff = totalPosition === 0 ? 0.999 : (totalPosition - matchPos) / totalPosition;
-        // const positionOff = 1 - (totalPosition * (matchPos === 0 ? 0.001 : matchPos / totalPosition));
-        strength += Math.min(positionOff, 0.999) * 1e6; // Offset from the start
+        // const totalPosition = resultTextLen - searchTextLen;
+        // const positionOff = totalPosition === 0 ? 1 : (totalPosition - matchPos) / totalPosition;
+        const positionOff = (1e4 - matchPos - 1) / 1e4; // Max title length is 1e4 characters
+        strength += parseBigVal(positionOff, 1e12); // Percentage relative offset from the start
 
         const filledPerc = searchTextLen / resultTextLen;
-        strength += Math.min(filledPerc, 0.999) * 1e3; // Percentage of result text that search term fills
+        strength += parseBigVal(filledPerc, 1e8); // Percentage of result text that search term fills
 
         let numCaps = 0;
         for (let i = 0; i < searchTextLen; i++) {
             if (searchText[i] === resultText[matchPos + i]) numCaps++;
         }
         const capsPerc = numCaps / searchTextLen;
-        strength += Math.min(capsPerc, 0.999); // Percentage of possible caps that match
+        strength += parseBigVal(capsPerc, 1e4); // Percentage of possible caps that match
     }
 
     return strength;
