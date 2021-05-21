@@ -50,20 +50,38 @@ const propToText: any = {
     venue: 'title',
 };
 
+interface GenericResultBuild extends Omit<GenericResult, 'subText2'> {
+    subText2: string | string[];
+}
+
 const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], resultType: ResultType) => {
+    let lastResult = { id: -1, subText2: [''] } as GenericResultBuild;
+
     results.forEach((result: any) => {
-        const genResult = {} as GenericResult;
-        genResult.id = result.id;
-        genResult.anyId = `${resultType}-${result.id}`;
-        genResult.resultType = resultType;
-        genResult.text = result[propToText[resultType]];
-        if (resultType === 'publication') {
-            genResult.subText1 = result.venue?.title;
-            genResult.subText2 = result.authors.map((author: any) => author.fullName).join(' • ');
-            genResult.rightText1 = String(result.year);
+        if (result.id == lastResult.id) {
+            if (resultType === 'publication' && result.fullName) {
+                (lastResult.subText2 as string[]).push(result.fullName);
+            }
+        } else {
+            const genResult = {} as GenericResultBuild;
+            genResult.id = result.id;
+            genResult.anyId = `${resultType}-${result.id}`;
+            genResult.resultType = resultType;
+            genResult.text = result[propToText[resultType]];
+            if (resultType === 'publication') {
+                lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
+                genResult.subText1 = result.venueTitle;
+                genResult.subText2 = result.fullName ? [result.fullName] : [];
+                genResult.rightText1 = String(result.year);
+            }
+            lastResult = genResult;
+            genResults.push(genResult as GenericResult);
         }
-        genResults.push(genResult);
     });
+
+    if (resultType === 'publication') {
+        lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
+    }
 
     return genResults;
 };
@@ -85,7 +103,7 @@ export default {
 
             if (fetchAny || resultType === 'publication') {
                 const results = await prisma.$queryRaw`
-                    SELECT p.id, p.title, p.year, a."fullName", v.title
+                    SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
                     FROM publications p
                     LEFT JOIN "_AuthorToPublication" ap
                         ON ap."B" = p.id
@@ -95,10 +113,6 @@ export default {
                         ON p."venueId" = v.id
                     WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
                 `;
-
-                console.log(results);
-                console.log('-');
-                console.dir(results, { depth: Infinity });
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication');
             }
