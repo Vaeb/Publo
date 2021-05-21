@@ -121,7 +121,7 @@ const mergeAuthorData = (authorSources: Author[][]) => {
 };
 
 const getMergedPublData = (publicationSources: Publication[]) => {
-    if (publicationSources.length === 1) return { ...publicationSources[0] };
+    if (publicationSources.length === 1) return { ...publicationSources[0], source: 'merged' };
 
     const mergedData: any = {};
     const publKeys = [...new Set([...publicationSources.map(publication => Object.keys(publication)).flat(1)])] as (keyof Publication)[];
