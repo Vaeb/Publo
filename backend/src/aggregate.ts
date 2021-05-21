@@ -192,7 +192,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1996, 0];
+    let startAt: any = [2019, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -280,7 +280,7 @@ const fetchDblp = async () => {
                         const { data: { message: crResultItem } } = crResult;
                         crData = crResultItem;
                     } else {
-                        const crResult = await axios.get(`${crossRefWorksUrl}?query=${parsePureName(dblpData.title)}`);
+                        const crResult = await axios.get(`${crossRefWorksUrl}?query=${encodeURIComponent(parsePureName(dblpData.title) as string)}`);
                         const { data: { message: { items: [crResultItem] } } } = crResult;
                         // console.log('crResultItem', crResultItem);
                         if (crResultItem && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title[0])) {
