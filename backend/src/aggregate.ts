@@ -272,7 +272,8 @@ const fetchDblp = async () => {
                     } else {
                         const crResult = await axios.get(`${crossRefWorksUrl}?query=${dblpData.title}`); // Title has been cleaned/tidied prior
                         const { data: { message: { items: [crResultItem] } } } = crResult;
-                        if (crResultItem != undefined && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title)) {
+                        console.log('crResultItem', crResultItem);
+                        if (crResultItem && crResultItem.title && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title)) {
                             crData = crResultItem;
                         }
                     }
