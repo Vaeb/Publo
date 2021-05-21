@@ -191,8 +191,8 @@ const levenshteinDistance = (str1: string, str2: string) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    // let startAt;
-    let startAt: any = [1990, 0];
+    let startAt;
+    // let startAt: any = [1990, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
