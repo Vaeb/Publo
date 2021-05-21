@@ -58,8 +58,8 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
     let lastResult = { id: -1, subText2: [''] } as GenericResultBuild;
 
     results.forEach((result: any) => {
-        if (includeDetails && result.id == lastResult.id) {
-            if (resultType === 'publication' && result.fullName) {
+        if (result.id == lastResult.id) {
+            if (includeDetails && resultType === 'publication' && result.fullName) {
                 (lastResult.subText2 as string[]).push(result.fullName);
             }
         } else {
