@@ -54,11 +54,11 @@ interface GenericResultBuild extends Omit<GenericResult, 'subText2'> {
     subText2: string | string[];
 }
 
-const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], resultType: ResultType) => {
+const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], resultType: ResultType, includeDetails?: boolean) => {
     let lastResult = { id: -1, subText2: [''] } as GenericResultBuild;
 
     results.forEach((result: any) => {
-        if (result.id == lastResult.id) {
+        if (includeDetails && result.id == lastResult.id) {
             if (resultType === 'publication' && result.fullName) {
                 (lastResult.subText2 as string[]).push(result.fullName);
             }
@@ -68,7 +68,7 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
             genResult.anyId = `${resultType}-${result.id}`;
             genResult.resultType = resultType;
             genResult.text = result[propToText[resultType]];
-            if (resultType === 'publication') {
+            if (includeDetails && resultType === 'publication') {
                 lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
                 genResult.subText1 = result.venueTitle;
                 genResult.subText2 = result.fullName ? [result.fullName] : [];
@@ -79,16 +79,18 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
         }
     });
 
-    if (resultType === 'publication') {
+    if (includeDetails && resultType === 'publication') {
         lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
     }
 
     return genResults;
 };
 
+interface findResultsParams { text: string, resultType: ResultType, includeDetails: boolean, fetchLimit: number, lookupLimit: number | null }
+
 export default {
     Query: {
-        findResults: async (_parent: any, { text, resultType, limit }: { text: string, resultType: ResultType, limit: number }, { prisma }: Context): Promise<any> => {
+        findResults: async (_parent: any, { text, resultType, includeDetails, fetchLimit, lookupLimit }: findResultsParams, { prisma }: Context): Promise<any> => {
             console.log(`Received request for findResults (${resultType}):`, text);
 
             if (resultType === undefined) resultType = 'any';
@@ -98,8 +100,12 @@ export default {
             let genResults = [] as GenericResult[];
 
             const fetchAny = resultType === 'any';
-            const numFetch = 1000;
-            const takeNum = Math.max(limit, (fetchAny ? Math.floor(numFetch / 3) : numFetch));
+            if (typeof lookupLimit === 'number' && lookupLimit > -1) {
+                lookupLimit = Math.max(fetchLimit, lookupLimit);
+                if (fetchAny) lookupLimit = Math.floor(lookupLimit / 3);
+            } else {
+                lookupLimit = null;
+            }
 
             if (fetchAny || resultType === 'publication') {
                 const results = await prisma.$queryRaw`
@@ -111,17 +117,17 @@ export default {
                         ON ap."A" = a."sourceId"
                     LEFT JOIN venues v
                         ON p."venueId" = v.id
-                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
                 `;
 
-                addToGeneric<typeof results[0]>(genResults, results, 'publication');
+                addToGeneric<typeof results[0]>(genResults, results, 'publication', includeDetails);
             }
 
             if (fetchAny || resultType === 'author') {
                 const results = await prisma.$queryRaw`
                     SELECT a.id, a."fullName"
                     FROM authors a
-                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'author');
@@ -131,7 +137,7 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT v.id, v.title
                     FROM venues v
-                    WHERE unaccent(v.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${takeNum};
+                    WHERE unaccent(v.title) ILIKE unaccent(${`%${text}%`}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'venue');
@@ -154,7 +160,7 @@ export default {
                     }
                     return bStrength - aStrength;
                 })
-                .slice(0, limit);
+                .slice(0, fetchLimit);
 
             console.log('Done, returning...');
 

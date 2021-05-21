@@ -12,7 +12,7 @@ import { GenericResult, ResultType } from '../../types';
 
 const findResults = gql`
     query($text: String!, $resultType: String) {
-        findResults(text: $text, resultType: $resultType, limit: 6) {
+        findResults(text: $text, resultType: $resultType, includeDetails: false, fetchLimit: 6) {
             id
             resultType
             text
