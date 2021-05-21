@@ -3,7 +3,7 @@
 import { Context, GenericResult, ResultType } from '../types';
 // import formatErrors from '../utils/formatErrors';
 
-const normalizeResultText = (str: string) => str.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '');
+const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
 
 const calcResultStrength = (searchText: string, result: GenericResult): number => { // Includes term, Offset from start, % filled, % matching caps
     // *Must* limit all factor increments to 0.999 * mult (w/ x1000 diff per)
