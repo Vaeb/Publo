@@ -14,6 +14,7 @@ export interface GenericResult {
     anyId: string;
     resultType: ResultType;
     text: string;
+    lookup: string;
     subText1?: string;
     subText2?: string;
     rightText1?: string;

@@ -1,6 +1,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 
 import he from 'he';
+import { parseLookup } from 'src/utils/parseLookup';
 
 import { Context, GenericResult, ResultType } from '../types';
 // import { formatErrors } from '../utils/formatErrors';
@@ -11,7 +12,7 @@ const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u03
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
 // Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
-const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): bigint => {
+const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): bigint => { // Add full vs lookup support
     // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
     // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
@@ -76,7 +77,8 @@ const addToGeneric = <Type>(genResults: GenericResult[], results: Type[], result
             genResult.id = result.id;
             genResult.anyId = `${resultType}-${result.id}`;
             genResult.resultType = resultType;
-            genResult.text = he.decode(result[propToText[resultType]]);
+            genResult.text = result[propToText[resultType]];
+            genResult.lookup = result.lookup;
             if (includeDetails && resultType === 'publication') {
                 lastResult.subText2 = (lastResult.subText2 as string[]).join(' • ');
                 genResult.subText1 = result.venueTitle;
@@ -116,27 +118,27 @@ export default {
                 lookupLimit = null;
             }
 
-            const textEncoded = he.encode(text, { useNamedReferences: true });
-            const textEncodedIns = `%${textEncoded}%`;
+            const textLookup = parseLookup(text) as string;
+            const textIns = `%${textLookup}%`;
             console.log('Fetching data...');
 
             if (fetchAny || resultType === 'publication') {
                 const results = includeDetails
                     ? await prisma.$queryRaw`
-                        SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
+                        SELECT p.id, p.title, p.lookup, p.year, a."fullName", v.title as "venueTitle"
                         FROM publications p
                         LEFT JOIN venues v
                             ON p."venueId" = v.id
                         LEFT JOIN "_AuthorToPublication" ap
                             ON ap."B" = p.id
                         LEFT JOIN authors a
-                            ON ap."A" = a."sourceId"
-                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
+                            ON ap."A" = a.id
+                        WHERE p.source = 'merged' AND p.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
                     `
                     : await prisma.$queryRaw`
-                        SELECT p.id, p.title, p.year
+                        SELECT p.id, p.title, p.lookup, p.year
                         FROM publications p
-                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
+                        WHERE p.source = 'merged' AND p.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
                     `;
 
                 console.log('Fetched publications, adding to generic');
@@ -146,9 +148,9 @@ export default {
 
             if (fetchAny || resultType === 'author') {
                 const results = await prisma.$queryRaw`
-                    SELECT a.id, a."fullName"
+                    SELECT a.id, a."fullName", a.lookup
                     FROM authors a
-                    WHERE unaccent(a."fullName") ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
+                    WHERE a.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'author');
@@ -156,9 +158,9 @@ export default {
 
             if (fetchAny || resultType === 'venue') {
                 const results = await prisma.$queryRaw`
-                    SELECT v.id, v.title
+                    SELECT v.id, v.title, v.lookup
                     FROM venues v
-                    WHERE unaccent(v.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
+                    WHERE v.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'venue');
@@ -167,17 +169,17 @@ export default {
             console.log('Sorting results...');
 
             const resultStrength: { [key: string]: bigint } = {};
-            const textSafe = escapeRegex(textEncoded.toLowerCase());
+            const textSafe = escapeRegex(textLookup.toLowerCase());
             genResults = genResults
                 .sort((a: GenericResult, b: GenericResult) => {
                     let aStrength = resultStrength[a.anyId];
                     let bStrength = resultStrength[b.anyId];
                     if (!aStrength) {
-                        aStrength = calcResultStrength(textEncoded, a, textSafe);
+                        aStrength = calcResultStrength(textLookup, a, textSafe);
                         resultStrength[a.anyId] = aStrength;
                     }
                     if (!bStrength) {
-                        bStrength = calcResultStrength(textEncoded, b, textSafe);
+                        bStrength = calcResultStrength(textLookup, b, textSafe);
                         resultStrength[b.anyId] = bStrength;
                     }
                     if (bStrength > aStrength) return 1;

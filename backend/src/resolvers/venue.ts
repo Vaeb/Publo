@@ -26,12 +26,6 @@ export default {
                 },
             });
 
-            if (venuePubs) {
-                venuePubs.publications.forEach((publ) => {
-                    publ.title = he.decode(publ.title);
-                });
-            }
-
             return venuePubs?.publications;
         },
     },

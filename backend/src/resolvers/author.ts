@@ -26,12 +26,6 @@ export default {
                 },
             });
 
-            if (authorPubs) {
-                authorPubs.publications.forEach((publ) => {
-                    publ.title = he.decode(publ.title);
-                });
-            }
-
             return authorPubs?.publications;
         },
     },

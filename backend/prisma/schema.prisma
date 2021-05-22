@@ -15,6 +15,8 @@ model PublicationRoot {
     title        String        @unique
     doi          String?       @unique
     publications Publication[]
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime      @updatedAt
 
     @@map("publication_roots")
 }
@@ -25,6 +27,7 @@ model Publication {
     publicationRootId Int?
     source            String
     title             String
+    lookup            String
     doi               String?
     type              String
     year              Int
@@ -40,17 +43,19 @@ model Publication {
     createdAt         DateTime         @default(now())
     updatedAt         DateTime         @updatedAt
 
+    @@unique([source, publicationRootId])
     @@unique([source, title])
     @@unique([source, doi])
     @@map("publications")
 }
 
 model Author {
-    id           Int           @unique @default(autoincrement())
-    sourceId     String        @id
+    id           Int           @id @default(autoincrement())
+    sourceId     String        @unique
     firstName    String
     lastName     String
     fullName     String
+    lookup       String
     orcid        String?
     dob          String?
     publications Publication[]
@@ -64,6 +69,7 @@ model Author {
 model Venue {
     id           Int           @id @default(autoincrement())
     title        String        @unique
+    lookup       String        @unique
     type         String
     issn         String?
     publications Publication[]

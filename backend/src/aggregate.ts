@@ -2,9 +2,11 @@
 /* eslint-disable @typescript-eslint/no-loop-func */
 
 import axios from 'axios';
+import he from 'he';
 
 import { Author, Publication } from '.prisma/client';
 import { prisma } from './server';
+import { parseLookup } from './utils/parseLookup';
 
 // const resetDatabase = true;
 
@@ -42,8 +44,6 @@ console.log('Aggregating publications...');
 //     venue?: string
 //     pdfUrl?: string
 // }
-
-const cleanStringField = (str?: string) => (str != null ? str.replace(/^\W+|\W+$/g, '') : undefined);
 
 const parseVenueTypeFromField = (fieldVal: string | null, source: string) => {
     let venueType = 'Unknown';
@@ -83,12 +83,14 @@ const parsePublicationType = (value: string | null) => {
     return newValue;
 };
 
+const cleanStringField = (str?: string) => (str != null ? str.replace(/^\W+|\W+$/g, '') : undefined);
+
 const simplifyForComparison = (str: string) => str.replace(/^\W+|\W+$|[^\w\s]+/g, '').replace(/\s+/g, ' ').toLowerCase();
 
 // normalize decomposes accents into separate character, then the regex removes the character for smart comparison
-const parseAuthorName = (name?: string) => (name != null ? name.normalize('NFD').replace(/^[^a-z]+|[^a-z]+$|[^a-z\- .,']+/ig, '') : undefined);
-
-const parsePureName = (name?: string) => (name != null ? name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '') : undefined);
+const parsePureName = (name?: string) => (name != null
+    ? name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '')
+    : undefined);
 
 const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
     fullName = fullName.toLowerCase();
@@ -259,13 +261,12 @@ const fetchDblp = async () => {
             }
 
             results = results
-                // .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
+                .filter(({ info: dblpData }: any) => dblpData.title)
                 .map(({ info: dblpData }: any) => {
-                    dblpData.title = cleanStringField(dblpData.title);
+                    dblpData.title = cleanStringField(he.decode(dblpData.title));
                     if (dblpData.doi) dblpData.doi = dblpData.doi.toUpperCase();
                     return dblpData;
-                })
-                .filter((dblpData: any) => dblpData.title);
+                });
 
             results = await filterAsync(results, async (dblpData: any) => {
                 const existingRow = await prisma.publication.findFirst({
@@ -314,9 +315,9 @@ const fetchDblp = async () => {
                     // console.log('Fetching CrossRef...');
                     if (dblpData.doi) {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
-                        const { data: { message: dblpResultItem } } = crResult;
-                        if (dblpResultItem?.title?.[0]) {
-                            crData = dblpResultItem;
+                        const { data: { message: crResultItem } } = crResult;
+                        if (crResultItem?.title?.[0]) {
+                            crData = crResultItem;
                         }
                     } else {
                         const crResult = await axios.get(`${crossRefWorksUrl}?query=${encodeURIComponent(parsePureName(dblpData.title) as string)}`);
@@ -332,6 +333,11 @@ const fetchDblp = async () => {
                                 }
                             }
                         }
+                    }
+
+                    if (crData) {
+                        crData.title = cleanStringField(he.decode(crData.title[0]));
+                        if (crData.DOI) crData.doi = crData.DOI.toUpperCase();
                     }
                 } catch (err) {
                     console.log(`${err.response?.status} CrossRef request yielded no data:`, err);
@@ -352,23 +358,24 @@ const fetchDblp = async () => {
                 // if (enabled === false) return undefined;
                 console.log(new Date(), '|', batchNumNow, '|', dblpData.doi, '|', dblpData.title);
 
-                const crAuthorList = (crData?.author || [])
-                    .filter((author: any) => author.given != undefined && author.family != undefined)
-                    .map((author: any) => {
-                        const firstName = parseAuthorName(author.given);
-                        const lastName = parseAuthorName(author.family);
-                        return { firstName, lastName, fullName: `${firstName} ${lastName}`, orcid: author.ORCID };
-                    });
-
                 let dblpAuthorList = (dblpData.authors?.author || []);
                 dblpAuthorList = (Array.isArray(dblpAuthorList) ? dblpAuthorList : [dblpAuthorList])
                     .map((author: any) => {
-                        const fullName = parseAuthorName(author.text);
+                        const fullName = he.decode(author.text);
                         if (!fullName) return undefined;
                         const nameParts = fullName.split(' ');
-                        return { firstName: nameParts[0], lastName: nameParts.slice(1).join(' '), fullName, sourceId: author['@pid'] };
+                        return { firstName: nameParts[0], lastName: nameParts.slice(1).join(' '), fullName, lookup: parseLookup(fullName), sourceId: author['@pid'] };
                     })
                     .filter((author: any) => author.firstName && author.lastName && author.fullName);
+
+                const crAuthorList = (crData?.author || [])
+                    .filter((author: any) => author.given != undefined && author.family != undefined)
+                    .map((author: any) => {
+                        const firstName = he.decode(author.given);
+                        const lastName = he.decode(author.family);
+                        const fullName = `${firstName} ${lastName}`;
+                        return { firstName, lastName, fullName, lookup: parseLookup(fullName), orcid: author.ORCID };
+                    });
 
                 mergeAuthorData([dblpAuthorList, ...(crData ? [crAuthorList] : [])]);
 
@@ -378,43 +385,17 @@ const fetchDblp = async () => {
                     }
                 });
 
-                const crVenueList = (crData?.['container-title'] || [])
-                    .map((venue: string) => parsePureName(venue));
-
                 const dblpVenueList = (Array.isArray(dblpData.venue) ? dblpData.venue : [dblpData.venue])
                     .filter((venue: any) => venue != null)
-                    .map((venue: string) => parsePureName(venue));
+                    .map((venue: string) => parsePureName(he.decode(venue)));
 
-                const crDataUse: any = crData ? {
-                    source: 'crossref',
-                    title: cleanStringField(crData.title[0]),
-                    doi: crData.DOI?.toUpperCase(),
-                    type: parsePublicationType(crData.type),
-                    year: crData.created?.['date-parts']?.[0]?.[0],
-                    stampCreated: crData.created?.timestamp ? new Date(crData.created.timestamp) : null,
-                    volume: crData.volume,
-                    pdfUrl: crData.link?.[0]?.URL,
-                    pageUrl: crData.URL,
-                    authors: {
-                        connectOrCreate: crAuthorList
-                            .map((author: any) => (
-                                {
-                                    create: author,
-                                    where: { sourceId: author.sourceId },
-                                }
-                            )),
-                    },
-                    venue: crVenueList.length ? {
-                        connectOrCreate: {
-                            create: { title: crVenueList[0], type: parseVenueTypeFromField(crData.type, 'crossref'), issn: crData.ISSN?.[0] },
-                            where: { title: crVenueList[0] },
-                        },
-                    } : undefined,
-                } : undefined;
+                const crVenueList = (crData?.['container-title'] || [])
+                    .map((venue: string) => parsePureName(he.decode(venue)));
 
                 const dblpDataUse: any = {
                     source: 'dblp',
                     title: dblpData.title,
+                    lookup: parseLookup(dblpData.title),
                     doi: dblpData.doi,
                     type: parsePublicationType(dblpData.type),
                     year: dblpData.year ? Number(dblpData.year) : null,
@@ -433,11 +414,39 @@ const fetchDblp = async () => {
                     },
                     venue: dblpVenueList.length ? {
                         connectOrCreate: {
-                            create: { title: dblpVenueList[0], type: parseVenueTypeFromField(dblpData.key, 'dblp') },
+                            create: { title: dblpVenueList[0], lookup: parseLookup(dblpVenueList[0]), type: parseVenueTypeFromField(dblpData.key, 'dblp') },
                             where: { title: dblpVenueList[0] },
                         },
                     } : undefined,
                 };
+
+                const crDataUse: any = crData ? {
+                    source: 'crossref',
+                    title: crData.title,
+                    lookup: parseLookup(crData.title),
+                    doi: crData.doi,
+                    type: parsePublicationType(crData.type),
+                    year: crData.created?.['date-parts']?.[0]?.[0],
+                    stampCreated: crData.created?.timestamp ? new Date(crData.created.timestamp) : null,
+                    volume: crData.volume,
+                    pdfUrl: crData.link?.[0]?.URL,
+                    pageUrl: crData.URL,
+                    authors: {
+                        connectOrCreate: crAuthorList
+                            .map((author: any) => (
+                                {
+                                    create: author,
+                                    where: { sourceId: author.sourceId },
+                                }
+                            )),
+                    },
+                    venue: crVenueList.length ? {
+                        connectOrCreate: {
+                            create: { title: crVenueList[0], lookup: parseLookup(crVenueList[0]), type: parseVenueTypeFromField(crData.type, 'crossref'), issn: crData.ISSN?.[0] },
+                            where: { title: crVenueList[0] },
+                        },
+                    } : undefined,
+                } : undefined;
 
                 if (!crDataUse) console.log('Not creating CrossRef publ; no data');
 
@@ -497,9 +506,8 @@ const fetchDblp = async () => {
                 const { id: publRootId } = (await prisma.publicationRoot.findFirst({
                     where: {
                         OR: [
-                            { doi: dblpData.doi },
-                            { title: dblpData.title },
-                            ...(crDataUse ? [{ title: crDataUse.title }] : []),
+                            { doi: mergedDataUse.doi },
+                            { title: mergedDataUse.title },
                         ],
                     },
                 }) || {});
@@ -527,10 +535,10 @@ const fetchDblp = async () => {
                     } else {
                         console.log('(C1) Creating new publication_root and merged publ');
                         numCreated++;
-                        const newPublRoot = await prisma.publicationRoot.create({ // [source, title] unique error appears when CR title is stored whilst shortened
+                        const newPublRoot = await prisma.publicationRoot.create({
                             data: {
-                                doi: dblpData.doi,
-                                title: dblpData.title,
+                                doi: mergedDataUse.doi,
+                                title: mergedDataUse.title,
                                 publications: {
                                     create: [
                                         mergedDataUse,
@@ -556,7 +564,7 @@ const fetchDblp = async () => {
                         if (crDataUse) {
                             console.log('(C3) Creating crossref publ');
                             try {
-                                await prisma.publicationRoot.update({
+                                await prisma.publicationRoot.update({ // [source, title] unique error appears when CR title is stored whilst shortened
                                     where: { id: newPublRoot.id },
                                     data: {
                                         publications: {

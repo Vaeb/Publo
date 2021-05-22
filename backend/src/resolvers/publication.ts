@@ -29,7 +29,6 @@ export default {
             let { publications } = publicationRoot;
             let mergedPubl = publications[0];
             publications = publications.filter((publ) => {
-                publ.title = he.decode(publ.title);
                 if (publ.source === 'merged') {
                     mergedPubl = publ;
                     return false;
@@ -48,8 +47,6 @@ export default {
                 include: { authors: true, venue: true },
             });
 
-            if (publication) publication.title = he.decode(publication.title);
-
             return publication;
         },
         getMergedPublication: async (_parent: any, { rootId }: any, { prisma }: Context): Promise<any> => {
@@ -59,8 +56,6 @@ export default {
                 where: { publicationRootId: rootId, source: 'merged' },
                 include: { authors: true, venue: true },
             });
-
-            if (publication) publication.title = he.decode(publication.title);
 
             return publication;
         },
@@ -73,12 +68,6 @@ export default {
                 },
                 orderBy: { title: 'asc' },
                 take: limit,
-            });
-
-            results.forEach((publRoot) => {
-                publRoot.publications.forEach((publ) => {
-                    publ.title = he.decode(publ.title);
-                });
             });
 
             // console.dir(results, { depth: Infinity });
