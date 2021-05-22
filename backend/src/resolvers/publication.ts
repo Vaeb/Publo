@@ -1,7 +1,5 @@
 /* eslint-disable implicit-arrow-linebreak */
 
-import he from 'he';
-
 // import { Author, Publication, Venue } from '.prisma/client';
 import { Context } from '../types';
 import { formatErrors } from '../utils/formatErrors';

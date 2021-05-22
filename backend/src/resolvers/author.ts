@@ -1,7 +1,5 @@
 /* eslint-disable implicit-arrow-linebreak */
 
-import he from 'he';
-
 import { Context } from '../types';
 
 export default {
