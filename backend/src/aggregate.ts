@@ -206,7 +206,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1970, 0];
+    let startAt: any = [1978, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -559,7 +559,7 @@ const fetchDblp = async () => {
                                 },
                             });
                         } catch (err) {
-                            console.log('Dblp create errored:', err);
+                            console.log('>>> Dblp crossref create failed:', dblpDataUse?.lookup, '>', err);
                         }
                         if (crDataUse) {
                             console.log('(C3) Creating crossref publ');
@@ -575,13 +575,12 @@ const fetchDblp = async () => {
                                     },
                                 });
                             } catch (err) {
-                                console.log('Crossref create errored:', err);
+                                console.log('>>> Prisma crossref create failed:', crDataUse?.title, ':::', crDataUse?.lookup, '>', err);
                             }
                         }
                     }
                 } catch (err) {
-                    console.log('>>> Prisma call failed:', crDataUse?.title);
-                    console.error(err);
+                    console.log('>>> Prisma call failed:', crDataUse?.title, '>', err);
                 }
 
                 // await prisma.publication.create({
