@@ -92,13 +92,13 @@ const parsePureName = (name?: string) => (name != null
     ? name.normalize('NFD').replace(/^\W+|\W+$|[\u0300-\u036f]/ig, '')
     : undefined);
 
-const getSimpleName = (fullName: string) => { // esquire|esq|jr|sr
-    fullName = fullName.toLowerCase();
-    const nameParts = fullName.replace(/[^ a-zA-Z.,-]+/g, '').split(/[ .,-]+/); // John Park-Wave; C.W.Park
+const getSimpleName = (name: string) => { // esquire|esq|jr|sr
+    name = name.toLowerCase();
+    const nameParts = name.replace(/[^ a-zA-Z.,-]+/g, '').split(/[ .,-]+/); // John Park-Wave; C.W.Park
     if (/\b(?:mr|mrs|miss|ms|dr|doctor|sir|lady|professor|prof)\b/i.test(nameParts[0])) {
         nameParts.splice(0, 1);
     }
-    if (nameParts.length === 0) return fullName;
+    if (nameParts.length === 0) return name;
     if (nameParts.length === 1) return nameParts[0];
     return `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
 };
@@ -109,9 +109,9 @@ const mergeAuthorData = (authorSources: Author[][]) => {
     const authorKeys = [...new Set([...authorSources.map(authorsSource => Object.keys(authorsSource[0] || [])).flat(1)])] as (keyof Author)[];
 
     for (const authorSource1 of authorSources[0]) {
-        const authorMatcher = getSimpleName(authorSource1.fullName);
+        const authorMatcher = getSimpleName(authorSource1.lookup);
         for (let i = 1; i < authorSources.length; i++) {
-            const authorSourceNextObj = Object.assign({}, ...authorSources[i].map((author: any) => ({ [getSimpleName(author.fullName)]: author })));
+            const authorSourceNextObj = Object.assign({}, ...authorSources[i].map((author: any) => ({ [getSimpleName(author.lookup)]: author })));
             const authorSourceNext = authorSourceNextObj[authorMatcher];
             if (authorSourceNext) {
                 for (const key of authorKeys) {
@@ -205,8 +205,8 @@ const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    // let startAt;
-    let startAt: any = [1983, 0];
+    let startAt;
+    // let startAt: any = [1983, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -381,16 +381,22 @@ const fetchDblp = async () => {
 
                 crAuthorList.forEach((author: any) => { // Add sourceIds to the CR authors that didn't have a matching DBLP author
                     if (author.sourceId === undefined) {
-                        author.sourceId = `CR/${author.fullName}`;
+                        author.sourceId = `CR/${author.lookup}`;
                     }
                 });
 
                 const dblpVenueList = (Array.isArray(dblpData.venue) ? dblpData.venue : [dblpData.venue])
                     .filter((venue: any) => venue != null)
-                    .map((venue: string) => parsePureName(he.decode(venue)));
+                    .map((venue: string) => {
+                        const title = parsePureName(he.decode(venue));
+                        return { title, lookup: parseLookup(title) };
+                    });
 
                 const crVenueList = (crData?.['container-title'] || [])
-                    .map((venue: string) => parsePureName(he.decode(venue)));
+                    .map((venue: string) => {
+                        const title = parsePureName(he.decode(venue));
+                        return { title, lookup: parseLookup(title) };
+                    });
 
                 const dblpDataUse: any = {
                     source: 'dblp',
@@ -414,8 +420,8 @@ const fetchDblp = async () => {
                     },
                     venue: dblpVenueList.length ? {
                         connectOrCreate: {
-                            create: { title: dblpVenueList[0], lookup: parseLookup(dblpVenueList[0]), type: parseVenueTypeFromField(dblpData.key, 'dblp') },
-                            where: { title: dblpVenueList[0] },
+                            create: { title: dblpVenueList[0].title, lookup: dblpVenueList[0].lookup, type: parseVenueTypeFromField(dblpData.key, 'dblp') },
+                            where: { lookup: dblpVenueList[0].lookup },
                         },
                     } : undefined,
                 };
@@ -442,8 +448,8 @@ const fetchDblp = async () => {
                     },
                     venue: crVenueList.length ? {
                         connectOrCreate: {
-                            create: { title: crVenueList[0], lookup: parseLookup(crVenueList[0]), type: parseVenueTypeFromField(crData.type, 'crossref'), issn: crData.ISSN?.[0] },
-                            where: { title: crVenueList[0] },
+                            create: { title: crVenueList[0].title, lookup: crVenueList[0].lookup, type: parseVenueTypeFromField(crData.type, 'crossref'), issn: crData.ISSN?.[0] },
+                            where: { lookup: crVenueList[0].lookup },
                         },
                     } : undefined,
                 } : undefined;
