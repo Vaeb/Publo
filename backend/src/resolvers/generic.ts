@@ -1,10 +1,8 @@
 /* eslint-disable implicit-arrow-linebreak */
 
-import he from 'he';
-import { parseLookup } from 'src/utils/parseLookup';
-
 import { Context, GenericResult, ResultType } from '../types';
 // import { formatErrors } from '../utils/formatErrors';
+import { parseLookup } from '../utils/parseLookup';
 import { escapeRegex } from '../utils/escapeRegex';
 
 const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
