@@ -514,7 +514,7 @@ const fetchDblp = async () => {
                     } else {
                         console.log('(C) Creating new publication_root and publications');
                         numCreated++;
-                        await prisma.publicationRoot.create({
+                        await prisma.publicationRoot.create({ // [source, title] unique error appears when CR title is stored whilst shortened
                             data: {
                                 doi: dblpData.doi,
                                 title: dblpData.title,

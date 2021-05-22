@@ -119,17 +119,23 @@ export default {
             const textEncoded = he.encode(text, { useNamedReferences: true });
 
             if (fetchAny || resultType === 'publication') {
-                const results = await prisma.$queryRaw`
-                    SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
-                    FROM publications p
-                    LEFT JOIN venues v
-                        ON p."venueId" = v.id
-                    LEFT JOIN "_AuthorToPublication" ap
-                        ON ap."B" = p.id
-                    LEFT JOIN authors a
-                        ON ap."A" = a."sourceId"
-                    WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
-                `;
+                const results = includeDetails
+                    ? await prisma.$queryRaw`
+                        SELECT p.id, p.title, p.year, a."fullName", v.title as "venueTitle"
+                        FROM publications p
+                        LEFT JOIN venues v
+                            ON p."venueId" = v.id
+                        LEFT JOIN "_AuthorToPublication" ap
+                            ON ap."B" = p.id
+                        LEFT JOIN authors a
+                            ON ap."A" = a."sourceId"
+                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                    `
+                    : await prisma.$queryRaw`
+                        SELECT p.id, p.title, p.year
+                        FROM publications p
+                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                    `;
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication', includeDetails);
             }
