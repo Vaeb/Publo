@@ -286,6 +286,7 @@ const fetchDblp = async () => {
 
             if (results.length === 0) {
                 console.log('No results for query!');
+                nextSleep = defaultSleep;
                 continue;
             } else {
                 console.log('Fetching crossref data...');
