@@ -9,7 +9,7 @@ const normalizeText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u0
 
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
-// Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
+// Factors: Includes simple term, Includes full term, Stand-alone term, % relative offset from start, % filled, % matching caps
 const calcResultStrength = (searchLookup: string, searchTextRaw: string, result: GenericResult, cachedData: any): bigint => {
     // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
