@@ -5,49 +5,79 @@ import { Context, GenericResult, ResultType } from '../types';
 import { parseLookup } from '../utils/parseLookup';
 import { escapeRegex } from '../utils/escapeRegex';
 
+const normalizeText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
+
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
 // Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
-const calcResultStrength = (searchText: string, result: GenericResult, searchTextSafe?: string): bigint => { // Add full vs lookup support
+const calcResultStrength = (searchLookup: string, searchTextRaw: string, result: GenericResult, searchLookupSafe?: string): bigint => { // Add full vs lookup support
     // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
     // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
     let strength = BigInt(0);
-    if (searchText === '') return strength;
+    if (searchLookup === '') return strength;
 
-    const searchTextLower = searchText.toLowerCase();
-    if (searchTextSafe == null) searchTextSafe = escapeRegex(searchTextLower);
-    const resultText = result.lookup;
-    // const resultText = normalizeResultText(result.lookup);
-    const resultTextLower = resultText.toLowerCase();
-    const matchPos = resultTextLower.indexOf(searchTextLower);
+    const searchLookupLower = searchLookup.toLowerCase();
+    if (searchLookupSafe == null) searchLookupSafe = escapeRegex(searchLookupLower);
+    const resultLookup = result.lookup;
+    const resultTextRaw = normalizeText(result.text);
+    const resultLookupLower = resultLookup.toLowerCase();
+    const matchPos = resultLookupLower.indexOf(searchLookupLower);
 
-    if (matchPos >= 0) {
-        strength += BigInt(0.9999e20); // Result text includes search term
+    if (matchPos > -1) {
+        strength += BigInt(0.9999e12) * BigInt(1e12); // Result text includes search term
 
-        const searchTextLen = searchText.length;
-        const resultTextLen = resultText.length;
+        const searchLookupLen = searchLookup.length;
+        const resultLookupLen = resultLookup.length;
 
-        const fullTerm = new RegExp(`\\b${searchTextSafe}\\b`).test(resultTextLower) ? 1 : 0;
+        const matchPosRaw = resultTextRaw.toLowerCase().indexOf(searchTextRaw.toLowerCase());
+        if (matchPosRaw > -1) {
+            strength += BigInt(0.9999e12) * BigInt(1e8);
+        }
+
+        const fullTerm = new RegExp(`\\b${searchLookupSafe}\\b`).test(resultLookupLower) ? 1 : 0;
         strength += parseBigVal(fullTerm, 1e12) * BigInt(1e4); // Percentage offset from start
 
-        // const totalPosition = resultTextLen - searchTextLen;
+        // const totalPosition = resultLookupLen - searchLookupLen;
         // const positionOff = totalPosition === 0 ? 1 : (totalPosition - matchPos) / totalPosition;
         const positionOff = (1e4 - matchPos - 1) / 1e4; // Max title length is 1e4 characters
         strength += parseBigVal(positionOff, 1e12); // Percentage relative offset from the start
 
-        const filledPerc = searchTextLen / resultTextLen;
+        const filledPerc = searchLookupLen / resultLookupLen;
         strength += parseBigVal(filledPerc, 1e8); // Percentage of result text that search term fills
 
         let numCaps = 0;
-        for (let i = 0; i < searchTextLen; i++) {
-            if (searchText[i] === resultText[matchPos + i]) numCaps++;
+        for (let i = 0; i < searchLookupLen; i++) {
+            if (searchLookup[i] === resultLookup[matchPos + i]) numCaps++;
         }
-        const capsPerc = numCaps / searchTextLen;
+        const capsPerc = numCaps / searchLookupLen;
         strength += parseBigVal(capsPerc, 1e4); // Percentage of possible caps that match
     }
 
     return strength;
+};
+
+const sortResults = (genResults: GenericResult[], text: string) => {
+    const resultStrength: { [key: string]: bigint } = {};
+    const searchLookup = parseLookup(text, true) as string;
+    const searchLookupSafe = escapeRegex(searchLookup.toLowerCase());
+    const searchTextRaw = normalizeText(text);
+    return genResults
+        .sort((a: GenericResult, b: GenericResult) => {
+            let aStrength = resultStrength[a.anyId];
+            let bStrength = resultStrength[b.anyId];
+            if (!aStrength) {
+                aStrength = calcResultStrength(searchLookup, searchTextRaw, a, searchLookupSafe);
+                resultStrength[a.anyId] = aStrength;
+            }
+            if (!bStrength) {
+                bStrength = calcResultStrength(searchLookup, searchTextRaw, b, searchLookupSafe);
+                resultStrength[b.anyId] = bStrength;
+            }
+            if (bStrength > aStrength) return 1;
+            if (aStrength > bStrength) return -1;
+            return 0;
+        });
 };
 
 const propToText: any = {
@@ -164,25 +194,7 @@ export default {
 
             console.log('Sorting results...');
 
-            const resultStrength: { [key: string]: bigint } = {};
-            const textSafe = escapeRegex(textLookup.toLowerCase());
-            genResults = genResults
-                .sort((a: GenericResult, b: GenericResult) => {
-                    let aStrength = resultStrength[a.anyId];
-                    let bStrength = resultStrength[b.anyId];
-                    if (!aStrength) {
-                        aStrength = calcResultStrength(textLookup, a, textSafe);
-                        resultStrength[a.anyId] = aStrength;
-                    }
-                    if (!bStrength) {
-                        bStrength = calcResultStrength(textLookup, b, textSafe);
-                        resultStrength[b.anyId] = bStrength;
-                    }
-                    if (bStrength > aStrength) return 1;
-                    if (aStrength > bStrength) return -1;
-                    return 0;
-                })
-                .slice(0, fetchLimit);
+            genResults = sortResults(genResults, text).slice(0, fetchLimit);
 
             console.log('Done, returning...');
 
