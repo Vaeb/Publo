@@ -314,16 +314,23 @@ const fetchDblp = async () => {
                     // console.log('Fetching CrossRef...');
                     if (dblpData.doi) {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
-                        const { data: { message: crResultItem } } = crResult;
-                        if (crResultItem?.title?.[0]) {
-                            crData = crResultItem;
+                        const { data: { message: dblpResultItem } } = crResult;
+                        if (dblpResultItem?.title?.[0]) {
+                            crData = dblpResultItem;
                         }
                     } else {
                         const crResult = await axios.get(`${crossRefWorksUrl}?query=${encodeURIComponent(parsePureName(dblpData.title) as string)}`);
-                        const { data: { message: { items: [crResultItem] } } } = crResult;
-                        // console.log('crResultItem', crResultItem);
-                        if (crResultItem?.title?.[0] && simplifyForComparison(dblpData.title) === simplifyForComparison(crResultItem.title[0])) {
-                            crData = crResultItem;
+                        const { data: { message: { items: crResultItems } } } = crResult;
+                        // console.log('crResultItems', crResultItems);
+                        if (crResultItems) {
+                            const dblpTitleSimple = simplifyForComparison(dblpData.title);
+                            for (let i = 0; i < crResultItems.length; i++) {
+                                const crResultItem = crResultItems[i];
+                                if (crResultItem.title?.[0] && dblpTitleSimple === simplifyForComparison(crResultItem.title[0])) {
+                                    crData = crResultItem;
+                                    break;
+                                }
+                            }
                         }
                     }
                 } catch (err) {
@@ -518,15 +525,43 @@ const fetchDblp = async () => {
                             console.log(`(X) Publication (${publId}) already exists under publication_root ${publRootId}, skipping...`);
                         }
                     } else {
-                        console.log('(C) Creating new publication_root and publications');
+                        console.log('(C1) Creating new publication_root and merged publ');
                         numCreated++;
-                        await prisma.publicationRoot.create({ // [source, title] unique error appears when CR title is stored whilst shortened
+                        const newPublRoot = await prisma.publicationRoot.create({ // [source, title] unique error appears when CR title is stored whilst shortened
                             data: {
                                 doi: dblpData.doi,
                                 title: dblpData.title,
-                                publications: createPublications,
+                                publications: {
+                                    create: [
+                                        mergedDataUse,
+                                    ],
+                                },
                             },
                         });
+                        console.log('(C2) Creating dblp publ');
+                        await prisma.publicationRoot.update({
+                            where: { id: newPublRoot.id },
+                            data: {
+                                publications: {
+                                    create: [
+                                        dblpDataUse,
+                                    ],
+                                },
+                            },
+                        });
+                        if (crDataUse) {
+                            console.log('(C3) Creating crossref publ');
+                            await prisma.publicationRoot.update({
+                                where: { id: newPublRoot.id },
+                                data: {
+                                    publications: {
+                                        create: [
+                                            crDataUse,
+                                        ],
+                                    },
+                                },
+                            });
+                        }
                     }
                 } catch (err) {
                     console.log('>>> Prisma call failed:', crDataUse?.title);
