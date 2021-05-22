@@ -10,29 +10,29 @@ const normalizeText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u0
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
 // Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
-const calcResultStrength = (searchLookup: string, searchTextRaw: string, result: GenericResult, searchLookupSafe?: string): bigint => { // Add full vs lookup support
+const calcResultStrength = (searchLookup: string, searchTextRaw: string, result: GenericResult, cachedData: any): bigint => {
     // *Must* limit all factor increments to 0.9999 * mult (w/ x10000 diff per)
     // 0 is acceptable min: 0.9999 / 0.??? has a max-scale of just below x10000
     // Max JS num that can safely do accurate multiplication is 1e14. Initiating as 0.????e20 is fine.
     let strength = BigInt(0);
     if (searchLookup === '') return strength;
 
-    const searchLookupLower = searchLookup.toLowerCase();
-    if (searchLookupSafe == null) searchLookupSafe = escapeRegex(searchLookupLower);
+    const searchLookupLower = cachedData.searchLookupLower || (cachedData.searchLookupLower = searchLookup.toLowerCase());
+    const searchLookupSafe = cachedData.searchLookupSafe || (cachedData.searchLookupSafe = escapeRegex(searchLookupLower));
     const resultLookup = result.lookup;
     const resultTextRaw = normalizeText(result.text);
     const resultLookupLower = resultLookup.toLowerCase();
     const matchPos = resultLookupLower.indexOf(searchLookupLower);
 
     if (matchPos > -1) {
-        strength += BigInt(0.9999e12) * BigInt(1e12); // Result text includes search term
+        strength += cachedData.BigInt24 || (cachedData.BigInt24 = BigInt(0.9999e12) * BigInt(1e12)); // Result text includes search term
 
         const searchLookupLen = searchLookup.length;
         const resultLookupLen = resultLookup.length;
 
         const matchPosRaw = resultTextRaw.toLowerCase().indexOf(searchTextRaw.toLowerCase());
         if (matchPosRaw > -1) {
-            strength += BigInt(0.9999e12) * BigInt(1e8);
+            strength += cachedData.BigInt20 || (cachedData.BigInt20 = BigInt(0.9999e12) * BigInt(1e8)); // Result lookup includes search lookup
         }
 
         const fullTerm = new RegExp(`\\b${searchLookupSafe}\\b`).test(resultLookupLower) ? 1 : 0;
@@ -60,18 +60,18 @@ const calcResultStrength = (searchLookup: string, searchTextRaw: string, result:
 const sortResults = (genResults: GenericResult[], text: string) => {
     const resultStrength: { [key: string]: bigint } = {};
     const searchLookup = parseLookup(text, true) as string;
-    const searchLookupSafe = escapeRegex(searchLookup.toLowerCase());
     const searchTextRaw = normalizeText(text);
+    const cachedData = {};
     return genResults
         .sort((a: GenericResult, b: GenericResult) => {
             let aStrength = resultStrength[a.anyId];
             let bStrength = resultStrength[b.anyId];
             if (!aStrength) {
-                aStrength = calcResultStrength(searchLookup, searchTextRaw, a, searchLookupSafe);
+                aStrength = calcResultStrength(searchLookup, searchTextRaw, a, cachedData);
                 resultStrength[a.anyId] = aStrength;
             }
             if (!bStrength) {
-                bStrength = calcResultStrength(searchLookup, searchTextRaw, b, searchLookupSafe);
+                bStrength = calcResultStrength(searchLookup, searchTextRaw, b, cachedData);
                 resultStrength[b.anyId] = bStrength;
             }
             if (bStrength > aStrength) return 1;
