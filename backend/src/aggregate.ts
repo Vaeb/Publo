@@ -539,28 +539,36 @@ const fetchDblp = async () => {
                             },
                         });
                         console.log('(C2) Creating dblp publ');
-                        await prisma.publicationRoot.update({
-                            where: { id: newPublRoot.id },
-                            data: {
-                                publications: {
-                                    create: [
-                                        dblpDataUse,
-                                    ],
-                                },
-                            },
-                        });
-                        if (crDataUse) {
-                            console.log('(C3) Creating crossref publ');
+                        try {
                             await prisma.publicationRoot.update({
                                 where: { id: newPublRoot.id },
                                 data: {
                                     publications: {
                                         create: [
-                                            crDataUse,
+                                            dblpDataUse,
                                         ],
                                     },
                                 },
                             });
+                        } catch (err) {
+                            console.log('Dblp create errored:', err);
+                        }
+                        if (crDataUse) {
+                            console.log('(C3) Creating crossref publ');
+                            try {
+                                await prisma.publicationRoot.update({
+                                    where: { id: newPublRoot.id },
+                                    data: {
+                                        publications: {
+                                            create: [
+                                                crDataUse,
+                                            ],
+                                        },
+                                    },
+                                });
+                            } catch (err) {
+                                console.log('Crossref create errored:', err);
+                            }
                         }
                     }
                 } catch (err) {
