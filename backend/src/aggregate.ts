@@ -631,7 +631,7 @@ const fetchDblp = async () => {
             // break;
         }
 
-        if (nextSleep === shortSleep) nextSleep = defaultSleep;
+        // if (nextSleep === shortSleep) nextSleep = defaultSleep;
 
         // return;
     }
