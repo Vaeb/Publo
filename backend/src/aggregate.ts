@@ -258,7 +258,7 @@ const fetchDblp = async () => {
                 continue;
             }
 
-            results = (results || [])
+            results = results
                 // .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
                 .map(({ info: dblpData }: any) => {
                     dblpData.title = cleanStringField(dblpData.title);
