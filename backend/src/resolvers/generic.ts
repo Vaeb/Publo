@@ -117,6 +117,7 @@ export default {
             }
 
             const textEncoded = he.encode(text, { useNamedReferences: true });
+            console.log('Fetching data...');
 
             if (fetchAny || resultType === 'publication') {
                 const results = includeDetails
@@ -136,6 +137,8 @@ export default {
                         FROM publications p
                         WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
                     `;
+
+                console.log('Fetched publications, adding to generic');
 
                 addToGeneric<typeof results[0]>(genResults, results, 'publication', includeDetails);
             }
