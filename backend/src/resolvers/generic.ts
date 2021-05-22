@@ -117,6 +117,7 @@ export default {
             }
 
             const textEncoded = he.encode(text, { useNamedReferences: true });
+            const textEncodedIns = `%${textEncoded}%`;
             console.log('Fetching data...');
 
             if (fetchAny || resultType === 'publication') {
@@ -130,12 +131,12 @@ export default {
                             ON ap."B" = p.id
                         LEFT JOIN authors a
                             ON ap."A" = a."sourceId"
-                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
                     `
                     : await prisma.$queryRaw`
                         SELECT p.id, p.title, p.year
                         FROM publications p
-                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                        WHERE p.source = 'merged' AND unaccent(p.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
                     `;
 
                 console.log('Fetched publications, adding to generic');
@@ -147,7 +148,7 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT a.id, a."fullName"
                     FROM authors a
-                    WHERE unaccent(a."fullName") ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                    WHERE unaccent(a."fullName") ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'author');
@@ -157,7 +158,7 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT v.id, v.title
                     FROM venues v
-                    WHERE unaccent(v.title) ILIKE unaccent(${`%${textEncoded}%`}) LIMIT ${lookupLimit};
+                    WHERE unaccent(v.title) ILIKE unaccent(${textEncodedIns}) LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'venue');

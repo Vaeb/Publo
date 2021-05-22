@@ -14,7 +14,7 @@ export default `
     }
 
     type Query {
-        findResults(text: String!, resultType: String, includeDetails: Boolean, fetchLimit: Int, lookupLimit: Int = 2000): [Result]!
+        findResults(text: String!, resultType: String, includeDetails: Boolean, fetchLimit: Int, lookupLimit: Int = 1100): [Result]!
     }
 
     type Mutation {
