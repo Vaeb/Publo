@@ -313,7 +313,7 @@ const fetchDblp = async () => {
 
                 try {
                     // console.log('Fetching CrossRef...');
-                    if (dblpData.doi === '123') {
+                    if (dblpData.doi) {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
                         const { data: { message: crResultItem } } = crResult;
                         if (crResultItem?.title?.[0]) {
