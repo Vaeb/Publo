@@ -203,8 +203,8 @@ const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    // let startAt;
-    let startAt: any = [2015, 1200];
+    let startAt;
+    // let startAt: any = [2015, 1200];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -250,6 +250,14 @@ const fetchDblp = async () => {
 
             let results = data?.result?.hits?.hit;
 
+            if (!results || results.length === 0) {
+                console.log(`No more results for this year (${dblpYear})!`);
+                queryOptions.splice(queryIndex, 1);
+                numOptions--;
+                queryIndex--;
+                continue;
+            }
+
             results = (results || [])
                 // .filter(({ info: dblpData }: any) => dblpData.doi != undefined)
                 .map(({ info: dblpData }: any) => {
@@ -278,9 +286,6 @@ const fetchDblp = async () => {
 
             if (results.length === 0) {
                 console.log('No results for query!');
-                queryOptions.splice(queryIndex, 1);
-                numOptions--;
-                queryIndex--;
                 continue;
             } else {
                 console.log('Fetching crossref data...');
