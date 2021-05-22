@@ -206,7 +206,7 @@ const fetchDblp = async () => {
     let enabled = true;
 
     // let startAt;
-    let startAt: any = [1978, 0];
+    let startAt: any = [1983, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
@@ -313,7 +313,7 @@ const fetchDblp = async () => {
 
                 try {
                     // console.log('Fetching CrossRef...');
-                    if (dblpData.doi) {
+                    if (dblpData.doi === '123') {
                         const crResult: any = await axios.get(`${crossRefWorksUrl}/${dblpData.doi}`); // Waits for network request to return data
                         const { data: { message: crResultItem } } = crResult;
                         if (crResultItem?.title?.[0]) {
