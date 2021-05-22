@@ -5,8 +5,6 @@ import { Context, GenericResult, ResultType } from '../types';
 import { parseLookup } from '../utils/parseLookup';
 import { escapeRegex } from '../utils/escapeRegex';
 
-const normalizeResultText = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/ig, '');
-
 const parseBigVal = (num: number, level: number) => BigInt(Math.floor(parseFloat(Math.min(num, 0.9999).toFixed(4)) * level));
 
 // Factors: Includes term, Stand-alone term, % relative offset from start, % filled, % matching caps
@@ -17,10 +15,10 @@ const calcResultStrength = (searchText: string, result: GenericResult, searchTex
     let strength = BigInt(0);
     if (searchText === '') return strength;
 
-    searchText = normalizeResultText(searchText);
     const searchTextLower = searchText.toLowerCase();
     if (searchTextSafe == null) searchTextSafe = escapeRegex(searchTextLower);
-    const resultText = normalizeResultText(result.text);
+    const resultText = result.lookup;
+    // const resultText = normalizeResultText(result.lookup);
     const resultTextLower = resultText.toLowerCase();
     const matchPos = resultTextLower.indexOf(searchTextLower);
 
