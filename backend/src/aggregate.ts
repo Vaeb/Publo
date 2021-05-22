@@ -205,8 +205,8 @@ const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
 const fetchDblp = async () => {
     let enabled = true;
 
-    let startAt;
-    // let startAt: any = [2015, 1200];
+    // let startAt;
+    let startAt: any = [1970, 0];
 
     // const dblpSize = 1000;
     const dblpSize = 20;

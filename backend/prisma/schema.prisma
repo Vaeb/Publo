@@ -45,6 +45,7 @@ model Publication {
 
     @@unique([source, publicationRootId])
     @@unique([source, title])
+    @@unique([source, lookup])
     @@unique([source, doi])
     @@map("publications")
 }
@@ -63,6 +64,7 @@ model Author {
     updatedAt    DateTime      @updatedAt
 
     // @@unique([firstName, lastName])
+    @@index([lookup])
     @@map("authors")
 }
 
@@ -76,6 +78,7 @@ model Venue {
     createdAt    DateTime      @default(now())
     updatedAt    DateTime      @updatedAt
 
+    @@index([lookup])
     @@map("venues")
 }
 
