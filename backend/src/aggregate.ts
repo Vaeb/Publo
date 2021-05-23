@@ -207,8 +207,8 @@ const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
 const aggregate = async () => {
     let enabled = true;
 
-    let startAt;
-    // let startAt: any = [1983, 0];
+    // let startAt;
+    let startAt: any = [1986, 3960];
 
     // const dblpSize = 1000;
     const dblpSize = 20;
