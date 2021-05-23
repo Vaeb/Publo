@@ -1,4 +1,5 @@
 import { listen } from './server';
+import './webhooks';
 
 // const resetDatabase = false;
 

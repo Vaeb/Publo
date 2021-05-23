@@ -30,6 +30,7 @@
         "pg": "^8.5.1",
         "pg-hstore": "^2.3.3",
         "reflect-metadata": "^0.1.13",
+        "tree-kill": "^1.2.2",
         "xml2js": "^0.4.23"
     },
     "devDependencies": {
