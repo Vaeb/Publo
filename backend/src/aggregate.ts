@@ -662,3 +662,5 @@ const authorUpdates = authors.map((authorRow, i) => {
     });
 });
 await prisma.$transaction(authorUpdates);
+
+console.log('Aggregation done!');

@@ -10,6 +10,7 @@ import treeKill from 'tree-kill';
 // }
 
 const cwd = path.resolve('.');
+const getDateStr = new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim();
 
 const app = express();
 
@@ -70,17 +71,17 @@ async function kill() {
 }
 
 async function update() {
-    console.log('-> Performing git stash...');
+    console.log(`[${getDateStr()}] -> Performing git stash...`);
     await spawnSync('git', ['stash']); // ['fetch']);
-    console.log('-> Performing git pull...');
+    console.log(`[${getDateStr()}] -> Performing git pull...`);
     await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
     try {
-        console.log('-> Building ts...');
+        console.log(`[${getDateStr()}] -> Building ts...`);
         await spawnSync('yarn', ['tsc']); // ['checkout', '-f', 'origin/master']
     } catch (err) {}
     // console.log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
-    console.log('-> Starting webserver...');
+    console.log(`[${getDateStr()}] -> Starting webserver...`);
     await spawnSync('yarn', ['start']);
 }
 
@@ -101,7 +102,7 @@ async function start() {
  */
 async function acceptPayload(payload) {
     const { ref, deleted, after } = payload;
-    console.log(`>>>>>>>>>>> [${new Date()}] | Detected a push: ${ref}`);
+    console.log(`>>>>>>>>>>> [${getDateStr()}] | Detected a push: ${ref}`);
     if (ref !== 'refs/heads/master') return;
     if (deleted) {
         console.log('-> Deleted, ignoring');
