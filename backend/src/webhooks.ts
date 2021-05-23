@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());
 
 /** @type {cp.ChildProcess[]} */
-let processes: any = [];
+let processes: cp.ChildProcess[] = [];
 
 /**
  * @param {string} cmd
