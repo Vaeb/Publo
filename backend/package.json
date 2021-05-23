@@ -10,7 +10,7 @@
         "tsdev": "ts-node src/index.ts",
         "start": "node --trace-deprecation --experimental-specifier-resolution=node dist/index.js",
         "dev": "nodemon --trace-deprecation --experimental-specifier-resolution=node dist/index.js",
-        "hook": "nodemon --trace-deprecation --experimental-specifier-resolution=node dist/webhooks.js",
+        "hook": "ts-node --trace-deprecation --experimental-specifier-resolution=node dist/webhooks.ts",
         "watch": "tsc -w",
         "start2": "node dist/index.js"
     },
