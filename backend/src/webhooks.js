@@ -77,7 +77,7 @@ async function update() {
     await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
     try {
         log('-> Building ts...');
-        await spawnSync('yarn', ['tsc']); // ['checkout', '-f', 'origin/master']
+        await spawnSync('yarn', ['tsc', '--skipLibCheck']); // ['checkout', '-f', 'origin/master']
     } catch (err) {}
     // log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
