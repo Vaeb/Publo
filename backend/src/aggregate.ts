@@ -648,4 +648,19 @@ const fetchDblp = async () => {
     };
 };
 
-fetchDblp();
+// fetchDblp();
+
+const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\' LIMIT 3');
+const authorUpdates = authors.map((authorRow, i) => {
+    const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+    const newFullName = authorRow.fullName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+    const newLookup = authorRow.lookup.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+    return ({ // prisma.author.update
+        where: { id: authorRow.id },
+        data: { lastName: newLastName, fullName: newFullName, lookup: newLookup },
+    });
+});
+console.log(authors);
+console.log('---');
+console.log(authorUpdates);
+// await prisma.$transaction(authorUpdates);
