@@ -76,8 +76,8 @@ async function update() {
     await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
     // console.log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
-    // console.log('-> Building modules...');
-    // await spawnSync('node', ['./scripts/build_all.js']);
+    console.log('-> Starting project scripts...');
+    await spawnSync('node', ['./scripts/start.ts']);
 }
 
 async function start() {
