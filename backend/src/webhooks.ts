@@ -82,9 +82,9 @@ async function update() {
 
 async function start() {
     console.log('-> Starting server');
-    spawn('yarn', ['start'], {
-        cwd: path.resolve(cwd, 'server'),
-    });
+    // spawn('yarn', ['start'], {
+    //     cwd: path.resolve(cwd, 'server'),
+    // });
 }
 
 interface Payload {
