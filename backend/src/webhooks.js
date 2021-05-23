@@ -76,29 +76,42 @@ async function kill() {
     processes = [];
 }
 
+async function updateBackend() {
+    // log('-> [Backend] Installing dependencies...');
+    // await spawnSync('backend', 'node', ['./scripts/install.js']);
+    try {
+        log('-> [Backend] Building ts...');
+        await spawnSync('backend', 'yarn', ['tsc', '--skipLibCheck']); // ['checkout', '-f', 'origin/master']
+    } catch (err) {}
+}
+
+async function updateFrontend() {
+    // log('-> [Frontend] Installing dependencies...');
+    // await spawnSync('backend', 'node', ['./scripts/install.js']);
+    log('-> [Frontend] Building website...');
+    await spawnSync('frontend', 'yarn', ['build']);
+}
+
 async function update() {
     log('-> Performing git stash...');
     await spawnSync('backend', 'git', ['stash']); // ['fetch']);
     log('-> Performing git pull...');
     await spawnSync('backend', 'git', ['pull']); // ['checkout', '-f', 'origin/master']
-    try {
-        log('-> Building ts...');
-        await spawnSync('backend', 'yarn', ['tsc', '--skipLibCheck']); // ['checkout', '-f', 'origin/master']
-    } catch (err) {}
-    // log('-> Installing dependencies...');
-    // await spawnSync('backend', 'node', ['./scripts/install.js']);
+    await Promise.all([
+        updateBackend(),
+        updateFrontend(),
+    ]);
 }
 
 async function startBackend() {
-    log('-> [Backend] Starting webserver...');
+    log('-> [Backend] Starting webserver');
     // await spawnSync('backend', 'yarn', ['start']);
     spawn('backend', 'yarn', ['start']);
 }
 
 async function startFrontend() {
-    log('-> [Frontend] Building website...');
-    await spawnSync('frontend', 'yarn', ['build']);
     // spawn('frontend', 'echo', ['123']);
+    log('-> [Frontend] Starting website');
     spawn('frontend', 'yarn', ['start']);
 }
 
