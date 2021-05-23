@@ -9,7 +9,8 @@ import treeKill from 'tree-kill';
 //     process.exit(1);
 // }
 
-const cwd = path.resolve('.');
+const backCwd = path.resolve('.');
+const frontCwd = path.resolve('../frontend/');
 const log = (...args) => console.log(`> ${new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim()} |`, ...args);
 
 const app = express();
@@ -19,6 +20,11 @@ app.use(express.json());
 /** @type {cp.ChildProcess[]} */
 let processes = [];
 
+const cwds = {
+    backend: backCwd,
+    frontend: frontCwd,
+};
+
 /**
  * @param {string} cmd
  * @param {string[]} [args]
@@ -26,8 +32,8 @@ let processes = [];
  * @returns {cp.ChildProcess}
 
  */
-function spawn(cmd, args, options = {}) {
-    const proc = cp.spawn(cmd, args, { cwd, stdio: 'inherit', ...options });
+function spawn(cwdType, cmd, args, options = {}) {
+    const proc = cp.spawn(cmd, args, { cwd: cwds[cwdType], stdio: 'inherit', ...options });
     processes.push(proc);
     const rem = () => {
         processes = processes.filter(p => p !== proc);
@@ -45,8 +51,8 @@ function spawn(cmd, args, options = {}) {
  * @returns {Promise<cp.ChildProcess>}
 
  */
-function spawnSync(cmd, args, options = {}) {
-    const proc = spawn(cmd, args, options);
+function spawnSync(cwdType, cmd, args, options = {}) {
+    const proc = spawn(cwdType, cmd, args, options);
     return new Promise((resolve, reject) => {
         proc.on('exit', (code) => {
             if (code === 0) {
@@ -72,24 +78,21 @@ async function kill() {
 
 async function update() {
     log('-> Performing git stash...');
-    await spawnSync('git', ['stash']); // ['fetch']);
+    await spawnSync('backend', 'git', ['stash']); // ['fetch']);
     log('-> Performing git pull...');
-    await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
+    await spawnSync('backend', 'git', ['pull']); // ['checkout', '-f', 'origin/master']
     try {
         log('-> Building ts...');
-        await spawnSync('yarn', ['tsc', '--skipLibCheck']); // ['checkout', '-f', 'origin/master']
+        await spawnSync('backend', 'yarn', ['tsc', '--skipLibCheck']); // ['checkout', '-f', 'origin/master']
     } catch (err) {}
     // log('-> Installing dependencies...');
-    // await spawnSync('node', ['./scripts/install.js']);
-    log('-> Starting webserver...');
-    await spawnSync('yarn', ['start']);
+    // await spawnSync('backend', 'node', ['./scripts/install.js']);
 }
 
 async function start() {
-    log('-> Starting server');
-    // spawn('yarn', ['start'], {
-    //     cwd: path.resolve(cwd, 'server'),
-    // });
+    log('-> Starting webserver...');
+    // await spawnSync('backend', 'yarn', ['start']);
+    spawn('backend', 'yarn', ['start']);
 }
 
 /**

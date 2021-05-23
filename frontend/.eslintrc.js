@@ -21,6 +21,7 @@ module.exports = {
         'plugin:react/recommended',
         'airbnb-typescript/base',
     ],
+    ignorePatterns: ['src/**/*.js'],
     rules: {
         'arrow-parens': [
             'error',
