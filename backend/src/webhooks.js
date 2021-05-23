@@ -10,7 +10,7 @@ import treeKill from 'tree-kill';
 // }
 
 const cwd = path.resolve('.');
-const getDateStr = new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim();
+const getDateStr = () => new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim();
 
 const app = express();
 
