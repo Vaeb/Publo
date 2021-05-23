@@ -650,7 +650,7 @@ const aggregate = async () => {
     };
 };
 
-aggregate();
+await aggregate();
 
 // const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
 // const authorUpdates = authors.map((authorRow, i) => {
