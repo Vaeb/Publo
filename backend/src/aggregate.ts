@@ -45,6 +45,8 @@ console.log('Aggregating publications...');
 //     pdfUrl?: string
 // }
 
+const parseAuthorName = (str: string) => str.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+
 const parseVenueTypeFromField = (fieldVal: string | null, source: string) => {
     let venueType = 'Unknown';
     if (!fieldVal) return venueType;
@@ -361,7 +363,7 @@ const fetchDblp = async () => {
                 let dblpAuthorList = (dblpData.authors?.author || []);
                 dblpAuthorList = (Array.isArray(dblpAuthorList) ? dblpAuthorList : [dblpAuthorList])
                     .map((author: any) => {
-                        const fullName = he.decode(author.text);
+                        const fullName = parseAuthorName(he.decode(author.text));
                         if (!fullName) return undefined;
                         const nameParts = fullName.split(' ');
                         return { firstName: nameParts[0], lastName: nameParts.slice(1).join(' '), fullName, lookup: parseLookup(fullName), sourceId: author['@pid'] };
@@ -371,8 +373,8 @@ const fetchDblp = async () => {
                 const crAuthorList = (crData?.author || [])
                     .filter((author: any) => author.given != undefined && author.family != undefined)
                     .map((author: any) => {
-                        const firstName = he.decode(author.given);
-                        const lastName = he.decode(author.family);
+                        const firstName = parseAuthorName(he.decode(author.given));
+                        const lastName = parseAuthorName(he.decode(author.family));
                         const fullName = `${firstName} ${lastName}`;
                         return { firstName, lastName, fullName, lookup: parseLookup(fullName), orcid: author.ORCID };
                     });
@@ -650,17 +652,17 @@ const fetchDblp = async () => {
 
 // fetchDblp();
 
-const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
-const authorUpdates = authors.map((authorRow, i) => {
-    if (i === 0 || i === authors.length - 1) console.log(authorRow);
-    const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-    const newFullName = authorRow.fullName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-    const newLookup = authorRow.lookup.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-    return prisma.author.update({
-        where: { id: authorRow.id },
-        data: { lastName: newLastName, fullName: newFullName, lookup: newLookup },
-    });
-});
-await prisma.$transaction(authorUpdates);
+// const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
+// const authorUpdates = authors.map((authorRow, i) => {
+//     if (i === 0 || i === authors.length - 1) console.log(authorRow);
+//     const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+//     const newFullName = authorRow.fullName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+//     const newLookup = authorRow.lookup.replace(/[\s\d/\-=:\\|@;]+$/g, '');
+//     return prisma.author.update({
+//         where: { id: authorRow.id },
+//         data: { lastName: newLastName, fullName: newFullName, lookup: newLookup },
+//     });
+// });
+// await prisma.$transaction(authorUpdates);
 
 console.log('Aggregation done!');
