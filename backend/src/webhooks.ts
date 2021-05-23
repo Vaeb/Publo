@@ -4,10 +4,10 @@ import fs from 'fs';
 import express from 'express';
 import treeKill from 'tree-kill';
 
-if (!fs.existsSync('./scripts')) {
-    console.error('Cannot find directory ./scripts, not running with correct working directory?');
-    process.exit(1);
-}
+// if (!fs.existsSync('./scripts')) {
+//     console.error('Cannot find directory ./scripts, not running with correct working directory?');
+//     process.exit(1);
+// }
 
 const cwd = path.resolve('.');
 
