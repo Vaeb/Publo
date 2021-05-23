@@ -163,7 +163,7 @@ export default {
                         LIMIT ${lookupLimit};
                     `
                     : await prisma.$queryRaw`
-                        SELECT p.id, p.title, p.lookup, p.year
+                        SELECT p.id, p.title, p.lookup
                         FROM publications p
                         WHERE p.source = 'merged' AND p.lookup LIKE ${textIns}
                         LIMIT ${lookupLimit};

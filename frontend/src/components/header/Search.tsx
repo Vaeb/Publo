@@ -49,7 +49,39 @@ interface SearchResultsParams {
     onClick: () => void;
 }
 
+let searchTimer: NodeJS.Timeout | undefined;
+let searchNum = 0;
 const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
+    const [show, setShow] = React.useState(false);
+
+    const searchNumNow = ++searchNum;
+
+    console.log(searchNumNow, ': Starting countdown');
+
+    const textLen = text.length;
+    let waitMs = 1000;
+
+    if (textLen > 4) {
+        waitMs = 200;
+    } else if (textLen > 2) {
+        waitMs = 500;
+    }
+
+    React.useEffect(() => {
+        console.log(searchNumNow, ': Starting countdown');
+        if (searchTimer) {
+            clearTimeout(searchTimer);
+            searchTimer = undefined;
+        }
+        searchTimer = setTimeout(() => {
+            setShow(true);
+        }, waitMs);
+    }, [show, text, searchType]);
+
+    if (!show) return null;
+
+    console.log(searchNumNow, ': Fetching results');
+
     const resultType = pluralToSingular[searchType];
 
     const { loading, error, data: _data } = useQuery(findResults, {
