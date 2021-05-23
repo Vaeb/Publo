@@ -10,7 +10,7 @@ import treeKill from 'tree-kill';
 // }
 
 const cwd = path.resolve('.');
-const getDateStr = () => new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim();
+const log = (...args) => console.log(`${new Date().toISOString().replace(/T|\.\w+$/g, ' ').trim()} |`, ...args);
 
 const app = express();
 
@@ -60,33 +60,33 @@ function spawnSync(cmd, args, options = {}) {
 }
 
 async function kill() {
-    console.log(`-> Killing ${processes.length} spawned processes...`);
+    log(`-> Killing ${processes.length} spawned processes...`);
     processes.forEach(p => treeKill(p.pid, 'SIGTERM'));
     if (processes.length) await new Promise(r => setTimeout(r, 2000));
     if (processes.length) {
-        console.log(`-> Killing ${processes.length} spawned processes forcefully...`);
+        log(`-> Killing ${processes.length} spawned processes forcefully...`);
         processes.forEach(p => treeKill(p.pid, 'SIGKILL'));
     }
     processes = [];
 }
 
 async function update() {
-    console.log(`[${getDateStr()}] -> Performing git stash...`);
+    log('-> Performing git stash...');
     await spawnSync('git', ['stash']); // ['fetch']);
-    console.log(`[${getDateStr()}] -> Performing git pull...`);
+    log('-> Performing git pull...');
     await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
     try {
-        console.log(`[${getDateStr()}] -> Building ts...`);
+        log('-> Building ts...');
         await spawnSync('yarn', ['tsc']); // ['checkout', '-f', 'origin/master']
     } catch (err) {}
-    // console.log('-> Installing dependencies...');
+    // log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
-    console.log(`[${getDateStr()}] -> Starting webserver...`);
+    log('-> Starting webserver...');
     await spawnSync('yarn', ['start']);
 }
 
 async function start() {
-    console.log('-> Starting server');
+    log('-> Starting server');
     // spawn('yarn', ['start'], {
     //     cwd: path.resolve(cwd, 'server'),
     // });
@@ -102,13 +102,13 @@ async function start() {
  */
 async function acceptPayload(payload) {
     const { ref, deleted, after } = payload;
-    console.log(`>>>>>>>>>>> [${getDateStr()}] | Detected a push: ${ref}`);
+    log(`>>>>>>>>>>>>>> Detected a push: ${ref} <<<<<<<<<<<<<<`);
     if (ref !== 'refs/heads/master') return;
     if (deleted) {
-        console.log('-> Deleted, ignoring');
+        log('-> Deleted, ignoring');
         return;
     }
-    console.log('-> Starting update process');
+    log('-> Starting update process');
     await kill();
     await update();
     await start();
@@ -144,10 +144,10 @@ app.get('/restart', (req, res) => {
 });
 
 app.listen(process.env.PORT || 81);
-console.log('Running on', process.env.PORT || 81);
+log('Running on', process.env.PORT || 81);
 
 kill().then(update).then(start).then(() => {
-    console.log('OK');
+    log('OK');
 }, (err) => {
-    console.log(String(err));
+    log(String(err));
 });
