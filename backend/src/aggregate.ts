@@ -650,7 +650,7 @@ const fetchDblp = async () => {
 
 // fetchDblp();
 
-const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\' LIMIT 3');
+const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
 const authorUpdates = authors.map((authorRow, i) => {
     if (i === 0 || i === authors.length - 1) console.log(authorRow);
     const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
