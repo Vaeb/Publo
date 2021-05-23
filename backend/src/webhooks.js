@@ -89,10 +89,24 @@ async function update() {
     // await spawnSync('backend', 'node', ['./scripts/install.js']);
 }
 
-async function start() {
-    log('-> Starting webserver...');
+async function startBackend() {
+    log('-> [Backend] Starting webserver...');
     // await spawnSync('backend', 'yarn', ['start']);
     spawn('backend', 'yarn', ['start']);
+}
+
+async function startFrontend() {
+    log('-> [Frontend] Building website...');
+    await spawnSync('frontend', 'yarn', ['build']);
+    spawn('frontend', 'echo', '123');
+    // spawn('frontend', 'yarn', ['start']);
+}
+
+async function start() {
+    await Promise.all([
+        startBackend(),
+        startFrontend(),
+    ]);
 }
 
 /**
