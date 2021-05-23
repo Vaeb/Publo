@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());
 
 /** @type {cp.ChildProcess[]} */
-let processes: cp.ChildProcess[] = [];
+let processes = [];
 
 /**
  * @param {string} cmd
@@ -25,7 +25,7 @@ let processes: cp.ChildProcess[] = [];
  * @returns {cp.ChildProcess}
 
  */
-function spawn(cmd: string, args: string[], options: cp.SpawnOptionsWithoutStdio = {}) {
+function spawn(cmd, args, options = {}) {
     const proc = cp.spawn(cmd, args, { cwd, stdio: 'inherit', ...options });
     processes.push(proc);
     const rem = () => {
@@ -44,9 +44,9 @@ function spawn(cmd: string, args: string[], options: cp.SpawnOptionsWithoutStdio
  * @returns {Promise<cp.ChildProcess>}
 
  */
-function spawnSync(cmd: string, args: string[], options: cp.SpawnOptionsWithoutStdio = {}) {
+function spawnSync(cmd, args, options = {}) {
     const proc = spawn(cmd, args, options);
-    return new Promise((resolve: (_: void) => void, reject) => {
+    return new Promise((resolve, reject) => {
         proc.on('exit', (code) => {
             if (code === 0) {
                 resolve();
@@ -89,12 +89,6 @@ async function start() {
     // });
 }
 
-interface Payload {
-    ref: string;
-    deleted: boolean;
-    after: string;
-}
-
 /**
  * @typedef {{
  *      ref: string;
@@ -103,7 +97,7 @@ interface Payload {
  * }} Payload
  * @param {Payload} payload
  */
-async function acceptPayload(payload: Payload) {
+async function acceptPayload(payload) {
     const { ref, deleted, after } = payload;
     console.log('Detected a push:', ref);
     if (ref !== 'refs/heads/master') return;

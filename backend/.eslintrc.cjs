@@ -17,7 +17,7 @@ module.exports = {
         'plugin:@typescript-eslint/recommended',
         'airbnb-typescript/base',
     ],
-    ignorePatterns: 'src/migrations/',
+    ignorePatterns: ['src/migrations/', 'src/**/*.js'],
     rules: {
         'arrow-parens': [
             'error',
