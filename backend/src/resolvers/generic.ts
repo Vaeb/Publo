@@ -159,12 +159,14 @@ export default {
                             ON ap."B" = p.id
                         LEFT JOIN authors a
                             ON ap."A" = a.id
-                        WHERE p.source = 'merged' AND p.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
+                        WHERE p.source = 'merged' AND p.lookup LIKE ${textIns}
+                        LIMIT ${lookupLimit};
                     `
                     : await prisma.$queryRaw`
                         SELECT p.id, p.title, p.lookup, p.year
                         FROM publications p
-                        WHERE p.source = 'merged' AND p.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
+                        WHERE p.source = 'merged' AND p.lookup LIKE ${textIns}
+                        LIMIT ${lookupLimit};
                     `;
 
                 console.log('Fetched publications, adding to generic');
@@ -176,7 +178,8 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT a.id, a."fullName", a.lookup
                     FROM authors a
-                    WHERE a.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
+                    WHERE a.lookup LIKE ${textIns}
+                    LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'author');
@@ -186,7 +189,8 @@ export default {
                 const results = await prisma.$queryRaw`
                     SELECT v.id, v.title, v.lookup
                     FROM venues v
-                    WHERE v.lookup ILIKE ${textIns} LIMIT ${lookupLimit};
+                    WHERE v.lookup LIKE ${textIns}
+                    LIMIT ${lookupLimit};
                 `;
 
                 addToGeneric(genResults, results, 'venue');
