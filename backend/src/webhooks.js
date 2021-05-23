@@ -130,7 +130,7 @@ const doUpdate = (goodCallback, badCallback) => {
     kill().then(update).then(start).then(() => {
         goodCallback('OK');
     }, (err) => {
-        badCallback(`${err.message}\n${err.stack}`);
+        badCallback(String(err));
     });
 }
 
@@ -142,7 +142,7 @@ app.get('/restart', (req, res) => {
     kill().then(start).then(() => {
         res.status(200).send('OK');
     }, (err) => {
-        res.status(500).send(`${err.message}\n${err.stack}`);
+        res.status(500).send(String(err));
     });
 });
 
