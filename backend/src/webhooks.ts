@@ -71,9 +71,9 @@ async function kill() {
 
 async function update() {
     console.log('-> Performing git fetch...');
-    await spawnSync('git', ['fetch']);
+    await spawnSync('git', ['stash']);
     console.log('-> Performing git checkout...');
-    await spawnSync('git', ['checkout', '-f', 'origin/master']);
+    await spawnSync('git', ['pull']);
     // console.log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
     // console.log('-> Building modules...');
