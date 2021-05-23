@@ -204,7 +204,7 @@ const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
     )).filter(i => i !== fail);
 };
 
-const fetchDblp = async () => {
+const aggregate = async () => {
     let enabled = true;
 
     let startAt;
@@ -650,7 +650,7 @@ const fetchDblp = async () => {
     };
 };
 
-// fetchDblp();
+aggregate();
 
 // const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
 // const authorUpdates = authors.map((authorRow, i) => {
