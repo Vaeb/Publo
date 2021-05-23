@@ -656,7 +656,7 @@ const authorUpdates = authors.map((authorRow, i) => {
     const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
     const newFullName = authorRow.fullName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
     const newLookup = authorRow.lookup.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-    return ({ // prisma.author.update
+    return prisma.author.update({
         where: { id: authorRow.id },
         data: { lastName: newLastName, fullName: newFullName, lookup: newLookup },
     });

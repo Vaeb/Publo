@@ -61,7 +61,7 @@ function spawnSync(cmd, args, options = {}) {
 async function kill() {
     console.log(`-> Killing ${processes.length} spawned processes...`);
     processes.forEach(p => treeKill(p.pid, 'SIGTERM'));
-    if (processes.length) await new Promise(r => setTimeout(r, 2e3));
+    if (processes.length) await new Promise(r => setTimeout(r, 2000));
     if (processes.length) {
         console.log(`-> Killing ${processes.length} spawned processes forcefully...`);
         processes.forEach(p => treeKill(p.pid, 'SIGKILL'));
