@@ -98,8 +98,8 @@ async function startBackend() {
 async function startFrontend() {
     log('-> [Frontend] Building website...');
     await spawnSync('frontend', 'yarn', ['build']);
-    spawn('frontend', 'echo', '123');
-    // spawn('frontend', 'yarn', ['start']);
+    // spawn('frontend', 'echo', ['123']);
+    spawn('frontend', 'yarn', ['start']);
 }
 
 async function start() {
