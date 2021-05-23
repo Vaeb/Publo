@@ -126,12 +126,16 @@ app.post('/github', (req, res) => {
     res.status(200).json({ message: 'OK' });
 });
 
-app.get('/update', (req, res) => {
+const doUpdate = (goodCallback, badCallback) => {
     kill().then(update).then(start).then(() => {
-        res.status(200).send('OK');
+        goodCallback('OK');
     }, (err) => {
-        res.status(500).send(`${err.message}\n${err.stack}`);
+        badCallback(`${err.message}\n${err.stack}`);
     });
+}
+
+app.get('/update', (req, res) => {
+    doUpdate(res.status(200).send, res.status(500).send);
 });
 
 app.get('/restart', (req, res) => {
@@ -144,3 +148,5 @@ app.get('/restart', (req, res) => {
 
 app.listen(process.env.PORT || 81);
 console.log('Running on', process.env.PORT || 81);
+
+doUpdate(console.log, console.log);
