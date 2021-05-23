@@ -74,10 +74,12 @@ async function update() {
     await spawnSync('git', ['stash']); // ['fetch']);
     console.log('-> Performing git pull...');
     await spawnSync('git', ['pull']); // ['checkout', '-f', 'origin/master']
+    console.log('-> Building ts...');
+    await spawnSync('yarn', ['tsc']); // ['checkout', '-f', 'origin/master']
     // console.log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
-    console.log('-> Starting project scripts...');
-    await spawnSync('node', ['./src/scripts/dist/start.ts']);
+    console.log('-> Starting webserver...');
+    await spawnSync('yarn', ['start']);
 }
 
 async function start() {

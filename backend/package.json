@@ -7,8 +7,10 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "aggregate": "node --trace-deprecation --experimental-specifier-resolution=node dist/aggregate.js",
-        "start": "ts-node src/index.ts",
+        "tsdev": "ts-node src/index.ts",
+        "start": "node --trace-deprecation --experimental-specifier-resolution=node dist/index.js",
         "dev": "nodemon --trace-deprecation --experimental-specifier-resolution=node dist/index.js",
+        "hook": "nodemon --trace-deprecation --experimental-specifier-resolution=node dist/webhooks.js",
         "watch": "tsc -w",
         "start2": "node dist/index.js"
     },
