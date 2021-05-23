@@ -77,7 +77,7 @@ async function update() {
     // console.log('-> Installing dependencies...');
     // await spawnSync('node', ['./scripts/install.js']);
     console.log('-> Starting project scripts...');
-    await spawnSync('node', ['./scripts/dist/start.ts']);
+    await spawnSync('node', ['./src/scripts/dist/start.ts']);
 }
 
 async function start() {
