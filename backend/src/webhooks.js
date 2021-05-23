@@ -126,14 +126,6 @@ app.post('/github', (req, res) => {
     res.status(200).json({ message: 'OK' });
 });
 
-const doUpdate = (goodCallback, badCallback) => {
-    kill().then(update).then(start).then(() => {
-        goodCallback('OK');
-    }, (err) => {
-        badCallback(String(err));
-    });
-}
-
 app.get('/update', (req, res) => {
     kill().then(update).then(start).then(() => {
         res.status(200).send('OK');
