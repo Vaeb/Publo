@@ -101,7 +101,7 @@ async function start() {
  */
 async function acceptPayload(payload) {
     const { ref, deleted, after } = payload;
-    console.log('Detected a push:', ref);
+    console.log(`>>>>>>>>>>> [${new Date()}] | Detected a push: ${ref}`);
     if (ref !== 'refs/heads/master') return;
     if (deleted) {
         console.log('-> Deleted, ignoring');
