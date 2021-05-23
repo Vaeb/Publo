@@ -135,7 +135,11 @@ const doUpdate = (goodCallback, badCallback) => {
 }
 
 app.get('/update', (req, res) => {
-    doUpdate(res.status(200).send, res.status(500).send);
+    kill().then(update).then(start).then(() => {
+        res.status(200).send('OK');
+    }, (err) => {
+        res.status(500).send(String(err));
+    });
 });
 
 app.get('/restart', (req, res) => {
@@ -149,4 +153,8 @@ app.get('/restart', (req, res) => {
 app.listen(process.env.PORT || 81);
 console.log('Running on', process.env.PORT || 81);
 
-doUpdate(console.log, console.log);
+kill().then(update).then(start).then(() => {
+    console.log('OK');
+}, (err) => {
+    console.log(String(err));
+});
