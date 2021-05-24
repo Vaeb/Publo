@@ -119,12 +119,12 @@ const DelayedSearch = ({ text, searchType, onClick }: SearchResultsParams) => {
     const [show, setShow] = useState(false);
 
     const textLen = text.length;
-    let waitMs = 1000;
+    let waitMs = 650; // 1000
 
     if (textLen > 4) {
-        waitMs = 200;
+        waitMs = 100; // 200
     } else if (textLen > 2) {
-        waitMs = 500;
+        waitMs = 300; // 500
     }
 
     console.log(`[${textLen}] ${show} Rendering delay component...`);
