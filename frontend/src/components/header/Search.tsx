@@ -119,7 +119,13 @@ const SearchFetch = ({ dataRef, text, searchType, onClick }: SearchFetchParams) 
     return (<SearchResults text={text} searchType={searchType} onClick={onClick} data={data} error={error} />);
 };
 
-const DelayedSearch = ({ text, searchType, onClick }: SearchFetchParams) => {
+interface DelayedSearchParams {
+    text: string;
+    searchType: string;
+    onClick: () => void;
+}
+
+const DelayedSearch = ({ text, searchType, onClick }: DelayedSearchParams) => {
     const [show, setShow] = useState(false);
     const dataRef = useRef({ findResults: [] });
 
