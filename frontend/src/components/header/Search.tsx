@@ -43,28 +43,9 @@ const RelevantIcon = (resultType: ResultType, allowAny = true, className?: strin
     );
 };
 
-interface SearchResultsParams {
-    text: string;
-    searchType: string;
-    onClick: () => void;
-}
+interface SearchResultsParams { text:string; searchType: string; onClick: () => void; data: any; error: any }
 
-const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
-    const resultType = pluralToSingular[searchType];
-
-    console.log('Fetching search query data...');
-
-    const { loading, error, data: _data } = useQuery(findResults, {
-        variables: { text, resultType },
-        fetchPolicy: 'no-cache',
-    });
-
-    const ref = useRef(_data);
-    if (!loading) ref.current = _data; // Cache old search results while new results are loading
-    const data = ref.current;
-
-    console.log('Got data:', 'loading', loading, '_data', _data, 'data', data, 'error', error);
-
+const SearchResults = ({ text, searchType, onClick, data, error }: SearchResultsParams) => {
     let results: GenericResult[];
     if (!data) {
         return null;
@@ -79,7 +60,7 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     if (!error) results.splice(0, 0, { id: '0', resultType: 'any', text: `> Search${searchType !== 'all' ? ` ${searchType}` : ''} for '${text}'` });
 
     const listQuery = {
-        type: resultType,
+        type: pluralToSingular[searchType],
     };
 
     return (
@@ -115,8 +96,34 @@ const SearchResults = ({ text, searchType, onClick }: SearchResultsParams) => {
     );
 };
 
-const DelayedSearch = ({ text, searchType, onClick }: SearchResultsParams) => {
+interface SearchFetchParams {
+    dataRef: any;
+    text: string;
+    searchType: string;
+    onClick: () => void;
+}
+
+const SearchFetch = ({ dataRef, text, searchType, onClick }: SearchFetchParams) => {
+    console.log('Fetching search query data...');
+
+    const { loading, error, data: newData } = useQuery(findResults, {
+        variables: { text, resultType: pluralToSingular[searchType] },
+        fetchPolicy: 'no-cache',
+    });
+
+    if (!loading) dataRef.current = newData; // Cache old search results while new results are loading
+    const data = dataRef.current;
+
+    console.log('Got data:', 'loading', loading, 'newData', newData, 'data', data, 'error', error);
+
+    return (<SearchResults text={text} searchType={searchType} onClick={onClick} data={data} error={error} />);
+};
+
+const DelayedSearch = ({ text, searchType, onClick }: SearchFetchParams) => {
     const [show, setShow] = useState(false);
+    const dataRef = useRef({ findResults: [] });
+
+    console.log(dataRef.current);
 
     const textLen = text.length;
     let waitMs = 650; // 1000
@@ -139,11 +146,13 @@ const DelayedSearch = ({ text, searchType, onClick }: SearchResultsParams) => {
         return () => clearTimeout(delayTimer);
     }, [text]);
 
-    if (!show) return null;
+    if (!show) {
+        return (<SearchResults text={text} searchType={searchType} onClick={onClick} data={dataRef.current} error={null} />);
+    }
 
     console.log(`[${textLen}] !!! Fetching results`);
 
-    return (<SearchResults text={text} searchType={searchType} onClick={onClick} />);
+    return (<SearchFetch dataRef={dataRef} text={text} searchType={searchType} onClick={onClick} />);
 };
 
 const toggleOnFocus = (initial = false): any => {
