@@ -159,42 +159,42 @@ const getMergedPublData = (publicationSources: Publication[]) => {
     return mergedData;
 };
 
-const levenshteinDistance = (str1: string, str2: string) => {
-    const len1 = str1.length;
-    const len2 = str2.length;
-    const matrix: { [key: number]: { [key: number]: number } } = []; // len1+1, len2+1
+// const levenshteinDistance = (str1: string, str2: string) => {
+//     const len1 = str1.length;
+//     const len2 = str2.length;
+//     const matrix: { [key: number]: { [key: number]: number } } = []; // len1+1, len2+1
 
-    if (len1 == 0) {
-        return len2;
-    } if (len2 == 0) {
-        return len1;
-    } if (str1 == str2) {
-        return 0;
-    }
+//     if (len1 == 0) {
+//         return len2;
+//     } if (len2 == 0) {
+//         return len1;
+//     } if (str1 == str2) {
+//         return 0;
+//     }
 
-    for (let i = 0; i <= len1; i++) {
-        matrix[i] = {};
-        matrix[i][0] = i;
-    }
+//     for (let i = 0; i <= len1; i++) {
+//         matrix[i] = {};
+//         matrix[i][0] = i;
+//     }
 
-    for (let j = 0; j <= len2; j++) {
-        matrix[0][j] = j;
-    }
+//     for (let j = 0; j <= len2; j++) {
+//         matrix[0][j] = j;
+//     }
 
-    for (let i = 1; i <= len1; i++) {
-        for (let j = 1; j <= len2; j++) {
-            let cost = 1;
+//     for (let i = 1; i <= len1; i++) {
+//         for (let j = 1; j <= len2; j++) {
+//             let cost = 1;
 
-            if (str1[i - 1] == str2[j - 1]) {
-                cost = 0;
-            }
+//             if (str1[i - 1] == str2[j - 1]) {
+//                 cost = 0;
+//             }
 
-            matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
-        }
-    }
+//             matrix[i][j] = Math.min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j - 1] + cost);
+//         }
+//     }
 
-    return matrix[len1][len2];
-};
+//     return matrix[len1][len2];
+// };
 
 const filterAsync = async (arr: any[], callback: (arg1: any) => any) => {
     // eslint-disable-next-line symbol-description

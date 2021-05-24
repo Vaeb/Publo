@@ -79,7 +79,7 @@ module.exports = {
         ],
         // '@typescript-eslint/no-unused-vars': 'off',
         'object-curly-newline': [
-            'error',
+            'warn',
             { minProperties: 5, multiline: true, consistent: true },
         ],
         'prefer-destructuring': [
