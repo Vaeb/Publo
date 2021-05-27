@@ -3,8 +3,9 @@
 
 import axios from 'axios';
 import he from 'he';
+import sqlstring from 'sqlstring';
 
-import { Author, Prisma, Publication } from '.prisma/client';
+import { Author, Publication } from '.prisma/client';
 import { prisma } from './server';
 import { parseLookup } from './utils/parseLookup';
 
@@ -658,31 +659,28 @@ const publicationRoots = await prisma.$queryRaw(`
     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
     LIMIT 9;
 `);
+
 const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    return Prisma.join([publRoot.id, publRoot.lookup]);
+    return [publRoot.id, publRoot.lookup];
 });
 
 console.log(`
 UPDATE publication_roots as proot
 SET lookup = proot_new.lookup
 FROM (
-    VALUES (${Prisma.join(rootUpdates, '), (')})
+    VALUES ${sqlstring.escape(rootUpdates)}
 ) as proot_new(id, lookup)
 WHERE proot_new.id = proot.id;
 `);
 
-await prisma.$executeRaw`
+await prisma.$queryRaw(`
     UPDATE publication_roots as proot
     SET lookup = proot_new.lookup
-    FROM (VALUES (${Prisma.join(
-        [
-            Prisma.join([5, 'a discussion on context awareness to better support the iot cloud edge continuum']),
-            Prisma.join([6, 'sgeq a new social group enlarging query with size constraints']),
-        ],
-        '), ('
-    )})) as proot_new(id, lookup)
+    FROM (
+        VALUES ${sqlstring.escape(rootUpdates)}
+    ) as proot_new(id, lookup)
     WHERE proot_new.id = proot.id;
-`;
+`);
 
 console.log('Aggregation done!');
