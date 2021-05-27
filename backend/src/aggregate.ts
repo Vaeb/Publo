@@ -664,14 +664,14 @@ const publicationRoots = await prisma.publicationRoot.findMany({
 const rootUpdates = publicationRoots.map((publRoot, i) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
     if (publRoot.publications[0]?.lookup) {
-        return ({ // prisma.publicationRoots.update
+        return prisma.publicationRoot.update({
             where: { id: publRoot.id },
             data: { lookup: publRoot.publications[0].lookup },
         });
     }
     return undefined;
-}).filter(update => update !== undefined);
-console.log(rootUpdates);
-// await prisma.$transaction(rootUpdates);
+}).filter(update => update !== undefined) as any;
+// console.log(rootUpdates);
+await prisma.$transaction(rootUpdates);
 
 console.log('Aggregation done!');
