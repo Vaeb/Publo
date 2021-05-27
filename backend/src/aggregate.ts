@@ -659,18 +659,23 @@ const publicationRoots = await prisma.$queryRaw(`
     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
 `);
 
-const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
+const rootUpdates: any[] = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
     return [publRoot.id, publRoot.lookup];
 });
 
-await prisma.$queryRaw(`
-    UPDATE publication_roots as proot
-    SET lookup = proot_new.lookup
-    FROM (
-        VALUES ${sqlstring.escape(rootUpdates)}
-    ) as proot_new(id, lookup)
-    WHERE proot_new.id = proot.id;
-`);
+const batchSize = 99999;
+while (rootUpdates.length > 0) {
+    console.log('Starting batch | Rows remaining:', rootUpdates.length);
+    const rootUpdatesNow = rootUpdates.splice(0, batchSize);
+    await prisma.$queryRaw(`
+        UPDATE publication_roots as proot
+        SET lookup = proot_new.lookup
+        FROM (
+            VALUES ${sqlstring.escape(rootUpdatesNow)}
+        ) as proot_new(id, lookup)
+        WHERE proot_new.id = proot.id;
+    `);
+}
 
 console.log('Aggregation done!');
