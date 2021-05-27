@@ -650,19 +650,28 @@ const aggregate = async () => {
     };
 };
 
-await aggregate();
+// await aggregate();
 
-// const authors = await prisma.$queryRaw('SELECT id, "lastName", "fullName", "lookup" FROM authors WHERE "fullName" ~ \'[[:digit:]]$\'');
-// const authorUpdates = authors.map((authorRow, i) => {
-//     if (i === 0 || i === authors.length - 1) console.log(authorRow);
-//     const newLastName = authorRow.lastName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-//     const newFullName = authorRow.fullName.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-//     const newLookup = authorRow.lookup.replace(/[\s\d/\-=:\\|@;]+$/g, '');
-//     return prisma.author.update({
-//         where: { id: authorRow.id },
-//         data: { lastName: newLastName, fullName: newFullName, lookup: newLookup },
-//     });
-// });
-// await prisma.$transaction(authorUpdates);
+const publicationRoots = await prisma.publicationRoot.findMany({
+    select: {
+        id: true,
+        publications: {
+            where: { source: 'merged' },
+        },
+    },
+    take: 3,
+});
+const rootUpdates = publicationRoots.map((publRoot, i) => {
+    if (i === 0 || i === rootUpdates.length - 1) console.log(publRoot);
+    if (publRoot.publications[0]?.lookup) {
+        return ({ // prisma.publicationRoots.update
+            where: { id: publRoot.id },
+            data: { lookup: publRoot.publications[0].lookup },
+        });
+    }
+    return undefined;
+}).filter(update => update !== undefined);
+console.log(rootUpdates);
+// await prisma.$transaction(rootUpdates);
 
 console.log('Aggregation done!');

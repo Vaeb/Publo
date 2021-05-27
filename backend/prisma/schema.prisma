@@ -13,6 +13,7 @@ generator client {
 model PublicationRoot {
     id           Int           @id @default(autoincrement())
     title        String        @unique
+    lookup       String?       @unique
     doi          String?       @unique
     publications Publication[]
     createdAt    DateTime      @default(now())
