@@ -655,16 +655,30 @@ const aggregate = async () => {
 const publicationRoots = await prisma.$queryRaw(`
     SELECT proot.id, p.lookup
     FROM "publication_roots" proot
-    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id;
+    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
+    LIMIT 7;
 `);
-const rootUpdates = publicationRoots.map((publRoot, i) => {
+const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    return prisma.publicationRoot.update({
-        where: { id: publRoot.id },
-        data: { lookup: publRoot.lookup },
-    });
+    return `(${publRoot.id}, '${publRoot.lookup}')`;
 });
-// console.log(rootUpdates);
-await prisma.$transaction(rootUpdates);
+
+console.log(`
+UPDATE publication_roots as proot
+SET lookup = proot_new.lookup
+FROM (
+    VALUES ${rootUpdates.join(', ')}
+) as proot_new(id, lookup)
+WHERE proot_new.id = proot.id;
+`);
+
+await prisma.$queryRaw(`
+    UPDATE publication_roots as proot
+    SET lookup = proot_new.lookup
+    FROM (
+        VALUES ${rootUpdates.join(', ')}
+    ) as proot_new(id, lookup)
+    WHERE proot_new.id = proot.id;
+`);
 
 console.log('Aggregation done!');
