@@ -675,9 +675,13 @@ WHERE proot_new.id = proot.id;
 await prisma.$executeRaw`
     UPDATE publication_roots as proot
     SET lookup = proot_new.lookup
-    FROM (
-        VALUES (${Prisma.join(rootUpdates, '), (')})
-    ) as proot_new(id, lookup)
+    FROM (VALUES (${Prisma.join(
+        [
+            Prisma.join([5, 'a discussion on context awareness to better support the iot cloud edge continuum']),
+            Prisma.join([6, 'sgeq a new social group enlarging query with size constraints']),
+        ],
+        '), ('
+    )})) as proot_new(id, lookup)
     WHERE proot_new.id = proot.id;
 `;
 
