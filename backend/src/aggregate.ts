@@ -652,24 +652,19 @@ const aggregate = async () => {
 
 // await aggregate();
 
-const publicationRoots = await prisma.publicationRoot.findMany({
-    select: {
-        id: true,
-        publications: {
-            where: { source: 'merged' },
-        },
-    },
-});
+const publicationRoots = await prisma.$queryRaw(`
+    SELECT proot.id, p.lookup
+    FROM "publication_roots" proot
+    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
+    LIMIT 5;
+`);
 const rootUpdates = publicationRoots.map((publRoot, i) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    if (publRoot.publications[0]?.lookup) {
-        return prisma.publicationRoot.update({
-            where: { id: publRoot.id },
-            data: { lookup: publRoot.publications[0].lookup },
-        });
-    }
-    return undefined;
-}).filter(update => update !== undefined) as any;
+    return prisma.publicationRoot.update({
+        where: { id: publRoot.id },
+        data: { lookup: publRoot.lookup },
+    });
+});
 // console.log(rootUpdates);
 await prisma.$transaction(rootUpdates);
 
