@@ -4,7 +4,7 @@
 import axios from 'axios';
 import he from 'he';
 
-import { Author, Publication } from '.prisma/client';
+import { Author, Prisma, Publication } from '.prisma/client';
 import { prisma } from './server';
 import { parseLookup } from './utils/parseLookup';
 
@@ -656,19 +656,29 @@ const publicationRoots = await prisma.$queryRaw(`
     SELECT proot.id, p.lookup
     FROM "publication_roots" proot
     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
+    LIMIT 9;
 `);
 const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    return `(${publRoot.id}, '${publRoot.lookup}')`;
+    return `(${Prisma.join([publRoot.id, publRoot.lookup])}')`;
 });
 
-await prisma.$queryRaw(`
+console.log(`
+UPDATE publication_roots as proot
+SET lookup = proot_new.lookup
+FROM (
+    VALUES ${rootUpdates.join(', ')}
+) as proot_new(id, lookup)
+WHERE proot_new.id = proot.id;
+`);
+
+await prisma.$executeRaw`
     UPDATE publication_roots as proot
     SET lookup = proot_new.lookup
     FROM (
         VALUES ${rootUpdates.join(', ')}
     ) as proot_new(id, lookup)
     WHERE proot_new.id = proot.id;
-`);
+`;
 
 console.log('Aggregation done!');
