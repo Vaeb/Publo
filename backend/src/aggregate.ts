@@ -659,7 +659,6 @@ const publicationRoots = await prisma.publicationRoot.findMany({
             where: { source: 'merged' },
         },
     },
-    take: 3,
 });
 const rootUpdates = publicationRoots.map((publRoot, i) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
