@@ -672,13 +672,13 @@ FROM (
 WHERE proot_new.id = proot.id;
 `);
 
-await prisma.$executeRaw`
+await prisma.$executeRaw(`
     UPDATE publication_roots as proot
     SET lookup = proot_new.lookup
     FROM (
         VALUES ${rootUpdates.join(', ')}
     ) as proot_new(id, lookup)
     WHERE proot_new.id = proot.id;
-`;
+`);
 
 console.log('Aggregation done!');
