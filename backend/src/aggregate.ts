@@ -667,7 +667,7 @@ console.log(`
 UPDATE publication_roots as proot
 SET lookup = proot_new.lookup
 FROM (
-    VALUES ${rootUpdates.join(', ')}
+    VALUES (${Prisma.join(rootUpdates, '), (')})
 ) as proot_new(id, lookup)
 WHERE proot_new.id = proot.id;
 `);
