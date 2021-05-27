@@ -655,8 +655,7 @@ const aggregate = async () => {
 const publicationRoots = await prisma.$queryRaw(`
     SELECT proot.id, p.lookup
     FROM "publication_roots" proot
-    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
-    LIMIT 5;
+    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id;
 `);
 const rootUpdates = publicationRoots.map((publRoot, i) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
