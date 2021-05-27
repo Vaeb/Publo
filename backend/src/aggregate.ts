@@ -657,22 +657,12 @@ const publicationRoots = await prisma.$queryRaw(`
     SELECT proot.id, p.lookup
     FROM "publication_roots" proot
     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
-    LIMIT 9;
 `);
 
 const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
     return [publRoot.id, publRoot.lookup];
 });
-
-console.log(`
-UPDATE publication_roots as proot
-SET lookup = proot_new.lookup
-FROM (
-    VALUES ${sqlstring.escape(rootUpdates)}
-) as proot_new(id, lookup)
-WHERE proot_new.id = proot.id;
-`);
 
 await prisma.$queryRaw(`
     UPDATE publication_roots as proot
