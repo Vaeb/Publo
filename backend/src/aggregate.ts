@@ -660,7 +660,7 @@ const publicationRoots = await prisma.$queryRaw(`
 `);
 const rootUpdates = publicationRoots.map((publRoot: any, i: number) => {
     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    return `(${Prisma.join([publRoot.id, publRoot.lookup])})`;
+    return Prisma.join([publRoot.id, publRoot.lookup]);
 });
 
 console.log(`
@@ -672,13 +672,13 @@ FROM (
 WHERE proot_new.id = proot.id;
 `);
 
-await prisma.$executeRaw(`
+await prisma.$executeRaw`
     UPDATE publication_roots as proot
     SET lookup = proot_new.lookup
     FROM (
-        VALUES ${rootUpdates.join(', ')}
+        VALUES (${Prisma.join(rootUpdates, '), (')})
     ) as proot_new(id, lookup)
     WHERE proot_new.id = proot.id;
-`);
+`;
 
 console.log('Aggregation done!');
