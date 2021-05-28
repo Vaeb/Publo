@@ -98,6 +98,7 @@ const blankAuthor: Author = {
 const blankPublication: Publication = {
     id: '-1',
     source: 'merged',
+    publicationRootId: -1,
     title: 'Loading...',
     doi: 'Loading...',
     type: 'Loading...',
