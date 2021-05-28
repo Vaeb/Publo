@@ -29,7 +29,6 @@ model Publication {
     publicationRootId Int?
     source            String
     title             String
-    lookup            String
     doi               String?
     type              String
     year              Int
@@ -47,7 +46,6 @@ model Publication {
 
     @@unique([source, publicationRootId])
     @@unique([source, title])
-    @@unique([source, lookup])
     @@unique([source, doi])
     @@map("publications")
 }

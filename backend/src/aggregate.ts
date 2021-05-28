@@ -404,7 +404,6 @@ const aggregate = async () => {
                 const dblpDataUse: any = {
                     source: 'dblp',
                     title: dblpData.title,
-                    lookup: parseLookup(dblpData.title),
                     doi: dblpData.doi,
                     type: parsePublicationType(dblpData.type),
                     year: dblpData.year ? Number(dblpData.year) : null,
@@ -432,7 +431,6 @@ const aggregate = async () => {
                 const crDataUse: any = crData ? {
                     source: 'crossref',
                     title: crData.title,
-                    lookup: parseLookup(crData.title),
                     doi: crData.doi,
                     type: parsePublicationType(crData.type),
                     year: crData.created?.['date-parts']?.[0]?.[0],
@@ -473,6 +471,7 @@ const aggregate = async () => {
                 if (!meetsRequired) continue;
 
                 const mergedDataUse = getMergedPublData([dblpDataUse, ...(crDataUse ? [crDataUse] : [])]);
+                const mergedDataLookup = parseLookup(mergedDataUse.title);
 
                 // const publicationRootConnect = {
                 //     connect: {
@@ -548,6 +547,7 @@ const aggregate = async () => {
                             data: {
                                 doi: mergedDataUse.doi,
                                 title: mergedDataUse.title,
+                                lookup: mergedDataLookup,
                                 publications: {
                                     create: [
                                         mergedDataUse,
@@ -568,7 +568,7 @@ const aggregate = async () => {
                                 },
                             });
                         } catch (err) {
-                            console.log('>>> Dblp crossref create failed:', dblpDataUse?.lookup, '>', err);
+                            console.log('>>> Dblp crossref create failed:', dblpDataUse?.title, '>', err);
                         }
                         if (crDataUse) {
                             console.log('(C3) Creating crossref publ');
@@ -584,7 +584,7 @@ const aggregate = async () => {
                                     },
                                 });
                             } catch (err) {
-                                console.log('>>> Prisma crossref create failed:', crDataUse?.title, ':::', crDataUse?.lookup, '>', err);
+                                console.log('>>> Prisma crossref create failed:', crDataUse?.title, '>', err);
                             }
                         }
                     }

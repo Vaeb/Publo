@@ -146,26 +146,28 @@ export default {
 
             const textLookup = parseLookup(text) as string;
             const textIns = `%${textLookup}%`;
-            console.log('Fetching data...');
+            console.log('Fetching data...', includeDetails);
 
             if (fetchAny || resultType === 'publication') {
                 const results = includeDetails
                     ? await prisma.$queryRaw`
-                        SELECT p.id, p.title, p.lookup, p.year, a."fullName", v.title as "venueTitle"
-                        FROM publications p
+                        SELECT proot.id, proot.title, proot.lookup, p.year, a."fullName", v.title as "venueTitle"
+                        FROM publication_roots proot
+                        JOIN publications p
+                            ON p."publicationRootId" = proot.id AND p.source = 'merged'
                         LEFT JOIN venues v
                             ON p."venueId" = v.id
                         LEFT JOIN "_AuthorToPublication" ap
                             ON ap."B" = p.id
                         LEFT JOIN authors a
                             ON ap."A" = a.id
-                        WHERE p.source = 'merged' AND p.lookup LIKE ${textIns}
+                        WHERE proot.lookup LIKE ${textIns}
                         LIMIT ${lookupLimit};
                     `
                     : await prisma.$queryRaw`
-                        SELECT p.id, p.title, p.lookup
-                        FROM publications p
-                        WHERE p.source = 'merged' AND p.lookup LIKE ${textIns}
+                        SELECT proot.id, proot.title, proot.lookup
+                        FROM publication_roots proot
+                        WHERE proot.lookup LIKE ${textIns}
                         LIMIT ${lookupLimit};
                     `;
 
