@@ -3,11 +3,11 @@ import { Author, GenericResult, Publication, ResultType, Venue } from '../types'
 export const toGeneric = (results: any[] | undefined, resultTypeAll: ResultType = 'any', boldAuthors: any = {}): GenericResult[] => {
     if (!results) return [];
 
-    return results.map((result: Publication | Author | Venue) => {
+    return results.map((result: any) => {
         const resultType = result.resultType || resultTypeAll;
 
         const genResult = {
-            id: result.id,
+            id: resultType === 'publication' ? result.publicationRootId : result.id,
             resultType,
         } as GenericResult;
 

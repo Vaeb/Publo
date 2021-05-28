@@ -28,6 +28,7 @@ const getPublications = gql`
     query($rootId: Int!) {
         getPublications(rootId: $rootId) {
             id
+            publicationRootId
             source
             title
             doi
@@ -42,6 +43,7 @@ const getPublications = gql`
                 fullName
                 publications(limit: 40) {
                     id
+                    publicationRootId
                     title
                     year
                     authors {
@@ -60,6 +62,7 @@ const getPublications = gql`
                 type
                 publications(limit: 40) {
                     id
+                    publicationRootId
                     title
                     year
                     authors {

@@ -8,6 +8,7 @@ export default `
     type Publication {
         id: ID!
         source: String
+        publicationRootId: Int
         resultType: String
         title: String!
         doi: String
