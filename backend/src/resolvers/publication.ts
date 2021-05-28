@@ -6,23 +6,19 @@ import { formatErrors } from '../utils/formatErrors';
 
 export default {
     Query: {
-        getPublications: async (_parent: any, { id }: any, { prisma }: Context): Promise<any> => {
-            console.log('Received request for getPublications:', id);
+        getPublications: async (_parent: any, { rootId }: any, { prisma }: Context): Promise<any> => {
+            console.log('Received request for getPublications:', rootId);
 
-            const { publicationRoot } = (await prisma.publication.findUnique({
-                where: { id },
+            const publicationRoot = await prisma.publicationRoot.findUnique({
+                where: { id: rootId },
                 select: {
-                    publicationRoot: {
-                        select: {
-                            publications: {
-                                include: { authors: true, venue: true },
-                            },
-                        },
+                    publications: {
+                        include: { authors: true, venue: true },
                     },
                 },
-            }) || {});
+            });
 
-            if (!publicationRoot?.publications) return undefined;
+            if (publicationRoot?.publications == null) return undefined;
 
             let { publications } = publicationRoot;
             let mergedPubl = publications[0];

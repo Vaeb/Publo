@@ -25,8 +25,8 @@ import { List } from '../../components/List/list';
 import { arrayToObj } from '../../utils/arrayToObj';
 
 const getPublications = gql`
-    query($id: Int!) {
-        getPublications(id: $id) {
+    query($rootId: Int!) {
+        getPublications(rootId: $rootId) {
             id
             source
             title
@@ -141,7 +141,7 @@ const getStructuredData = (publications: Publication[], key: string) => {
 
 const PublicationPage = ({ id }: any): ReactElement | null => {
     const { loading, error, data } = useQuery(getPublications, {
-        variables: { id: Number(id) },
+        variables: { rootId: Number(id) },
         // variables: { id: -1 },
     });
 

@@ -30,7 +30,7 @@ export default `
     }
 
     type Query {
-        getPublications(id: Int!): [Publication]
+        getPublications(rootId: Int!): [Publication]
         getPublication(rootId: Int!): Publication
         getMergedPublication(id: Int!): Publication
         getAllPublications(limit: Int): [Publication]!
