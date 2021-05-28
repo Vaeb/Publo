@@ -651,22 +651,18 @@ const aggregate = async () => {
     };
 };
 
-// await aggregate();
+await aggregate();
 
-const publicationRoots = await prisma.$queryRaw(`
-    SELECT proot.id, p.lookup
-    FROM "publication_roots" proot
-    JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
-`);
+// const publicationRoots = await prisma.$queryRaw(`
+//     SELECT proot.id, p.lookup
+//     FROM "publication_roots" proot
+//     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
+// `);
 
-const rootUpdates = publicationRoots.map((result: any, i: number) => {
-    if (i === 0 || i === publicationRoots.length - 1) console.log(result);
-    // return [result.id, result.lookup];
-    return prisma.publicationRoot.update({
-        where: { id: result.id },
-        data: { lookup: result.lookup },
-    });
-});
+// const rootUpdates: any[] = publicationRoots.map((publRoot: any, i: number) => {
+//     if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
+//     return [publRoot.id, publRoot.lookup];
+// });
 
 // const batchSize = 49999;
 // while (rootUpdates.length > 0) {
@@ -681,7 +677,5 @@ const rootUpdates = publicationRoots.map((result: any, i: number) => {
 //         WHERE proot_new.id = proot.id;
 //     `);
 // }
-
-await prisma.$transaction(rootUpdates);
 
 console.log('Aggregation done!');

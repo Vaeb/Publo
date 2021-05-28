@@ -19,6 +19,7 @@ model PublicationRoot {
     createdAt    DateTime      @default(now())
     updatedAt    DateTime      @updatedAt
 
+    @@index([lookup], name: "idx_gin_proot_lookup")
     @@map("publication_roots")
 }
 
