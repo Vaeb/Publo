@@ -659,23 +659,29 @@ const publicationRoots = await prisma.$queryRaw(`
     JOIN publications p ON p.source = 'merged' AND p."publicationRootId" = proot.id
 `);
 
-const rootUpdates: any[] = publicationRoots.map((publRoot: any, i: number) => {
-    if (i === 0 || i === publicationRoots.length - 1) console.log(publRoot);
-    return [publRoot.id, publRoot.lookup];
+const rootUpdates = publicationRoots.map((result: any, i: number) => {
+    if (i === 0 || i === publicationRoots.length - 1) console.log(result);
+    // return [result.id, result.lookup];
+    return prisma.publicationRoot.update({
+        where: { id: result.id },
+        data: { lookup: result.lookup },
+    });
 });
 
-const batchSize = 49999;
-while (rootUpdates.length > 0) {
-    console.log('Starting batch | Rows remaining:', rootUpdates.length);
-    const rootUpdatesNow = rootUpdates.splice(0, batchSize);
-    await prisma.$executeRaw(`
-        UPDATE publication_roots as proot
-        SET lookup = proot_new.lookup
-        FROM (
-            VALUES ${sqlstring.escape(rootUpdatesNow)}
-        ) as proot_new(id, lookup)
-        WHERE proot_new.id = proot.id;
-    `);
-}
+// const batchSize = 49999;
+// while (rootUpdates.length > 0) {
+//     console.log('Starting batch | Rows remaining:', rootUpdates.length);
+//     const rootUpdatesNow = rootUpdates.splice(0, batchSize);
+//     await prisma.$executeRaw(`
+//         UPDATE publication_roots as proot
+//         SET lookup = proot_new.lookup
+//         FROM (
+//             VALUES ${sqlstring.escape(rootUpdatesNow)}
+//         ) as proot_new(id, lookup)
+//         WHERE proot_new.id = proot.id;
+//     `);
+// }
+
+await prisma.$transaction(rootUpdates);
 
 console.log('Aggregation done!');
