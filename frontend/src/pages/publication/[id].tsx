@@ -158,7 +158,7 @@ const PublicationPage = ({ id }: any): ReactElement | null => {
         publications = [blankPublication];
     }
 
-    const publIdMap = Object.assign({}, ...publications.map(publ => ({ [publ.id]: publ })));
+    const publIdMap = Object.assign({}, ...publications.map(publ => ({ [publ.publicationRootId]: publ })));
     const mergedPubl = publications[0];
     console.log('mergedPubl', mergedPubl);
 
