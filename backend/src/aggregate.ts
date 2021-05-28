@@ -664,7 +664,7 @@ const rootUpdates: any[] = publicationRoots.map((publRoot: any, i: number) => {
     return [publRoot.id, publRoot.lookup];
 });
 
-const batchSize = 99999;
+const batchSize = 49999;
 while (rootUpdates.length > 0) {
     console.log('Starting batch | Rows remaining:', rootUpdates.length);
     const rootUpdatesNow = rootUpdates.splice(0, batchSize);
