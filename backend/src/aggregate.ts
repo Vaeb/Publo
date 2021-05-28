@@ -668,7 +668,7 @@ const batchSize = 49999;
 while (rootUpdates.length > 0) {
     console.log('Starting batch | Rows remaining:', rootUpdates.length);
     const rootUpdatesNow = rootUpdates.splice(0, batchSize);
-    await prisma.$queryRaw(`
+    await prisma.$executeRaw(`
         UPDATE publication_roots as proot
         SET lookup = proot_new.lookup
         FROM (
