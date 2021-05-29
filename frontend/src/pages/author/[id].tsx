@@ -20,6 +20,7 @@ const getAuthor = gql`
             orcid
             publications {
                 id
+                publicationRootId
                 title
                 year
                 authors {

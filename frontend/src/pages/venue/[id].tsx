@@ -18,6 +18,7 @@ const getVenue = gql`
             issn
             publications {
                 id
+                publicationRootId
                 title
                 year
                 authors {
