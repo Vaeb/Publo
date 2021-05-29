@@ -64,7 +64,7 @@ model Author {
     updatedAt    DateTime      @updatedAt
 
     // @@unique([firstName, lastName])
-    @@index([lookup])
+    @@index([lookup], name: "idx_gin_author_lookup")
     @@map("authors")
 }
 
@@ -78,7 +78,7 @@ model Venue {
     createdAt    DateTime      @default(now())
     updatedAt    DateTime      @updatedAt
 
-    @@index([lookup])
+    @@index([lookup], name: "idx_gin_venue_lookup")
     @@map("venues")
 }
 
